@@ -1,0 +1,12 @@
+﻿*.iml
+*.class
+.classpath
+.project
+
+komunikator2.iml
+komunikator2.eml
+komunikator2.userlibraries
+komunikator2.iml
+bin/
+.idea/
+out/
