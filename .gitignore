@@ -2,6 +2,9 @@
 *.class
 .classpath
 .project
+*.txt
+
+META-INF/
 
 komunikator2.iml
 komunikator2.eml

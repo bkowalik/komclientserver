@@ -4,7 +4,6 @@ import common.protocol.ComStream;
 
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.LinkedBlockingDeque;
 
 public class Dispatcher implements Runnable {
     private final BlockingQueue<ComStream> toDispatch;
