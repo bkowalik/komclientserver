@@ -14,8 +14,8 @@ public class Dispatcher implements Runnable {
     private final ConcurrentMap<String, ClientWorker> clients;
 
     public Dispatcher(BlockingQueue<ComStream> incomming, ConcurrentMap<String, ClientWorker> clients) {
-        if(incomming == null) throw new NullPointerException("Incomming queue cannot be null");
-        if(clients == null) throw new NullPointerException("Clients map cannot be null");
+        if (incomming == null) throw new NullPointerException("Incomming queue cannot be null");
+        if (clients == null) throw new NullPointerException("Clients map cannot be null");
 
         this.clients = clients;
         toDispatch = incomming;
@@ -25,11 +25,11 @@ public class Dispatcher implements Runnable {
     public void run() {
         try {
             logger.config("Dispatcher started");
-            while(!Thread.interrupted()) {
+            while (!Thread.interrupted()) {
                 ComStream comObj = toDispatch.take();
                 ClientWorker clientWorker = clients.get(comObj.to);
 
-                if(clientWorker == null) {
+                if (clientWorker == null) {
                     //TODO: dodawanie do bazy danych
                     continue;
                 }

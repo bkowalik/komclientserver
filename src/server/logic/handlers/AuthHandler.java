@@ -13,8 +13,8 @@ public class AuthHandler implements Runnable {
     private final ConcurrentMap<String, ClientWorker> authorized;
 
     public AuthHandler(BlockingQueue<ClientWorker> unauth, ConcurrentMap<String, ClientWorker> auth) {
-        if(unauth == null) throw new NullPointerException("Unauth clients queue cannot be null");
-        if(auth == null) throw new NullPointerException("Autorized clients map cannot be null");
+        if (unauth == null) throw new NullPointerException("Unauth clients queue cannot be null");
+        if (auth == null) throw new NullPointerException("Autorized clients map cannot be null");
 
         unauthorized = unauth;
         authorized = auth;
@@ -24,7 +24,7 @@ public class AuthHandler implements Runnable {
     public void run() {
         ClientWorker worker;
         logger.config("AuthHandler started");
-        while(!Thread.interrupted()) {
+        while (!Thread.interrupted()) {
             try {
                 worker = unauthorized.take();
             } catch (InterruptedException e) {
@@ -32,11 +32,11 @@ public class AuthHandler implements Runnable {
                 break;
             }
 
-            if(!worker.isActive()) {
+            if (!worker.isActive()) {
                 continue;
             }
 
-            if(!worker.isAuthenticated()) {
+            if (!worker.isAuthenticated()) {
                 unauthorized.add(worker);
                 continue;
             }

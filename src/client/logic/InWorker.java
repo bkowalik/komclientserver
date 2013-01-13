@@ -17,7 +17,7 @@ public class InWorker implements Runnable {
     private final ObjectInput input;
 
     public InWorker(InputStream in, Queue<ComStream> inStreams) throws IOException {
-        if(in == null) throw new NullPointerException("InputStream is null");
+        if (in == null) throw new NullPointerException("InputStream is null");
         input = new ObjectInputStream(in);
         this.inStreams = inStreams;
     }
@@ -26,9 +26,9 @@ public class InWorker implements Runnable {
     public void run() {
         ComStream stream;
         try {
-            while(!Thread.interrupted()) {
+            while (!Thread.interrupted()) {
                 try {
-                    stream = (ComStream)input.readObject();
+                    stream = (ComStream) input.readObject();
                     inStreams.add(stream);
                 } catch (ClassNotFoundException e) {
                     logger.log(Level.SEVERE, "Error", e);
@@ -39,7 +39,10 @@ public class InWorker implements Runnable {
                 }
             }
         } finally {
-            try { input.close(); } catch (IOException e) { }
+            try {
+                input.close();
+            } catch (IOException e) {
+            }
         }
     }
 }

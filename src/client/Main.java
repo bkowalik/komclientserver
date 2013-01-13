@@ -39,7 +39,7 @@ public class Main {
         System.out.println("Połączono");
         System.out.println("Uwieżytelnianie...");
         ComObject obj = c.authenticate(new Login(login, pass));
-        if(!(obj instanceof Ok)) throw new UnauthorizedException();
+        if (!(obj instanceof Ok)) throw new UnauthorizedException();
         System.out.println("Uwieżytelniono");
         System.out.println();
 
@@ -47,11 +47,11 @@ public class Main {
         String msg;
         Queue<ComStream> streams = c.getInStreams();
         try {
-            while(true) {
-                if(!streams.isEmpty()) System.out.println("Odczytuje wiadomości:");
-                while(!streams.isEmpty()) {
+            while (true) {
+                if (!streams.isEmpty()) System.out.println("Odczytuje wiadomości:");
+                while (!streams.isEmpty()) {
                     ComStream st = streams.poll();
-                    Message m = (Message)st.obj;
+                    Message m = (Message) st.obj;
                     System.out.println(st.from + ": " + m.body);
                 }
 
@@ -61,7 +61,7 @@ public class Main {
                 System.out.print("Wiadomość: ");
                 msg = in.nextLine();
 
-                if(to.equals("") || msg.equals("")) continue;
+                if (to.equals("") || msg.equals("")) continue;
 
                 c.sendStream(new ComStream(login, to, new Message(msg)));
             }

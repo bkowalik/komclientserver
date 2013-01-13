@@ -1,4 +1,4 @@
-package server.logic.handlers;
+package server.nlogic;
 
 
 public class ServerOutWorker implements Runnable {

@@ -20,13 +20,13 @@ public class GarbageHandler implements Runnable {
 
     @Override
     public void run() {
-        while(!Thread.interrupted()) {
-            for(ConcurrentMap.Entry<String, ClientWorker> w : workers.entrySet()) {
-                if(!w.getValue().isActive()) workers.remove(w.getKey());
+        while (!Thread.interrupted()) {
+            for (ConcurrentMap.Entry<String, ClientWorker> w : workers.entrySet()) {
+                if (!w.getValue().isActive()) workers.remove(w.getKey());
             }
         }
         try {
-            TimeUnit.SECONDS.sleep(10);
+            TimeUnit.SECONDS.sleep(restTime);
         } catch (InterruptedException e) {
             logger.log(Level.WARNING, "GarbageHandler interrupted", e);
         }

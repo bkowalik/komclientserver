@@ -20,8 +20,8 @@ public class Server extends AbstractServer {
         public void run() {
             Socket soc;
             try {
-                while(!Thread.interrupted()) {
-                    while(pausing) wait();
+                while (!Thread.interrupted()) {
+                    while (pausing) wait();
                     logger.info("Wainting...");
                     soc = server.accept();
                     logger.info("Client connected");
@@ -34,7 +34,11 @@ public class Server extends AbstractServer {
             } catch (InterruptedException e) {
                 logger.log(Level.WARNING, "Error", e);
             } finally {
-                try { server.close(); } catch (IOException e) { e.printStackTrace(); }
+                try {
+                    server.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
             }
         }
     }
@@ -73,13 +77,13 @@ public class Server extends AbstractServer {
     }
 
     public synchronized void pause() {
-        if(!running) return;
+        if (!running) return;
         pausing = true;
         logger.info("Server paused");
     }
 
     public synchronized void resume() {
-        if(running) {
+        if (running) {
             pausing = false;
             notifyAll();
             logger.info("Server resumed");
@@ -87,12 +91,14 @@ public class Server extends AbstractServer {
     }
 
     public synchronized void stop() {
-        if(!running) return;
+        if (!running) return;
         running = false;
         exec.shutdownNow();
         try {
             server.close();
-        } catch (IOException e) { logger.log(Level.SEVERE, "Error", e); }
+        } catch (IOException e) {
+            logger.log(Level.SEVERE, "Error", e);
+        }
         logger.info("Server stopped");
     }
 }

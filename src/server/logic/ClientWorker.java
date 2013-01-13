@@ -5,7 +5,10 @@ import common.protocol.request.Login;
 import common.protocol.response.Error;
 import common.protocol.response.Ok;
 
-import java.io.*;
+import java.io.BufferedOutputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.net.SocketTimeoutException;
 import java.util.concurrent.BlockingQueue;
@@ -15,7 +18,7 @@ import java.util.logging.Logger;
 
 public class ClientWorker implements Runnable {
     private static final Logger logger = Logger.getLogger(ClientWorker.class.getName());
-    private  String id;
+    private String id;
     private boolean running;
     private boolean authenticated;
     private final BlockingQueue<ComStream> incomming;
@@ -25,8 +28,8 @@ public class ClientWorker implements Runnable {
     private final ObjectOutputStream output;
 
     public ClientWorker(Socket socket, BlockingQueue<ComStream> incomming) throws IOException {
-        if(socket == null) throw new NullPointerException("Socket cannot be null");
-        if(incomming == null) throw new NullPointerException("Incomming messages queue cannot be null");
+        if (socket == null) throw new NullPointerException("Socket cannot be null");
+        if (incomming == null) throw new NullPointerException("Incomming messages queue cannot be null");
 
         this.socket = socket;
         this.incomming = incomming;
@@ -40,10 +43,10 @@ public class ClientWorker implements Runnable {
     @Override
     public void run() {
         try {
-            while(!Thread.interrupted() && !authenticated) {
+            while (!Thread.interrupted() && !authenticated) {
                 try {
                     ComStream stream = (ComStream) input.readObject();
-                    if(!(stream.obj instanceof Login)) {
+                    if (!(stream.obj instanceof Login)) {
                         output.writeObject(new ComStream(Server.SERVER_IDENTYFICATOR,
                                 null,
                                 new Error(Error.Types.HACK_ATTEMPT)
@@ -54,7 +57,7 @@ public class ClientWorker implements Runnable {
                     }
 
                     Login login = (Login) stream.obj;
-                    if((login.username.equals("bartek") && login.password.equals("haslo"))
+                    if ((login.username.equals("bartek") && login.password.equals("haslo"))
                             || (login.username.equals("misia") && login.password.equals("maslo"))) {
                         authenticated = true;
                         id = login.username;
@@ -81,12 +84,16 @@ public class ClientWorker implements Runnable {
 
             ComStream stream;
             Object obj;
-            try { socket.setSoTimeout(5); } catch (IOException e) { e.printStackTrace(); }
-            while(!Thread.interrupted() && authenticated) {
+            try {
+                socket.setSoTimeout(5);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            while (!Thread.interrupted() && authenticated) {
                 try {
-                    if(toSend.size() > 0) {
+                    if (toSend.size() > 0) {
                         System.out.println("Wiadomości");
-                        for(ComStream s : toSend) {
+                        for (ComStream s : toSend) {
                             output.writeObject(toSend.take());
                             output.flush();
                             output.reset();
@@ -95,19 +102,19 @@ public class ClientWorker implements Runnable {
                     }
                     obj = null;
                     obj = input.readObject();
-                    if(obj != null) {
-                        if(!(obj instanceof ComStream)) continue;
+                    if (obj != null) {
+                        if (!(obj instanceof ComStream)) continue;
                         stream = (ComStream) obj;
                         incomming.add(stream);
                     }
                 } catch (SocketTimeoutException e) {
-                } catch(IOException e) {
+                } catch (IOException e) {
                     logger.log(Level.WARNING, "Error", e);
                     return;
-                } catch(InterruptedException e) {
+                } catch (InterruptedException e) {
                     logger.log(Level.WARNING, "Error", e);
                     return;
-                } catch(ClassNotFoundException e) {
+                } catch (ClassNotFoundException e) {
                     logger.log(Level.WARNING, "Error", e);
                     return;
                 }
@@ -123,7 +130,7 @@ public class ClientWorker implements Runnable {
             input.close();
             output.close();
             socket.close();
-        } catch(IOException e) {
+        } catch (IOException e) {
             logger.log(Level.SEVERE, "Very bad!", e);
         }
     }

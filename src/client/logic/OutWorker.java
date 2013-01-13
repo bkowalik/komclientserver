@@ -17,8 +17,8 @@ public class OutWorker implements Runnable {
     private final BlockingQueue<ComStream> outStreams;
 
     public OutWorker(OutputStream out, BlockingQueue<ComStream> outStreams) throws IOException {
-        if(out == null) throw new NullPointerException("OutputStream is null");
-        if(outStreams == null) throw new NullPointerException("BlockingQueue is null");
+        if (out == null) throw new NullPointerException("OutputStream is null");
+        if (outStreams == null) throw new NullPointerException("BlockingQueue is null");
 
         output = new ObjectOutputStream(new BufferedOutputStream(out));
         output.flush();
@@ -29,7 +29,7 @@ public class OutWorker implements Runnable {
     public void run() {
         ComStream stream;
         try {
-            while(!Thread.interrupted()) {
+            while (!Thread.interrupted()) {
                 try {
                     stream = outStreams.take();
                     output.writeObject(stream);
@@ -44,7 +44,10 @@ public class OutWorker implements Runnable {
                 }
             }
         } finally {
-            try { output.close(); } catch (IOException e) { }
+            try {
+                output.close();
+            } catch (IOException e) {
+            }
         }
     }
 }

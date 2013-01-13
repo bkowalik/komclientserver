@@ -1,9 +1,9 @@
 package common.exceptions;
 
 
-
 public class ClinetException extends Exception {
-    public ClinetException() {}
+    public ClinetException() {
+    }
 
     public ClinetException(String message) {
         super(message);
