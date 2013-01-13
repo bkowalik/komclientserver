@@ -2,16 +2,17 @@ package client.logic;
 
 
 import common.protocol.ComStream;
-import org.apache.log4j.Logger;
 
 import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 import java.util.concurrent.BlockingQueue;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class OutWorker implements Runnable {
-    private static final Logger logger = Logger.getLogger(OutWorker.class);
+    private static final Logger logger = Logger.getLogger(OutWorker.class.getName());
     private final ObjectOutputStream output;
     private final BlockingQueue<ComStream> outStreams;
 
@@ -35,10 +36,10 @@ public class OutWorker implements Runnable {
                     output.flush();
                     output.reset();
                 } catch (InterruptedException e) {
-                    logger.fatal("Error", e);
+                    logger.log(Level.WARNING, "Error", e);
                     break;
                 } catch (IOException e) {
-                    logger.fatal("Error", e);
+                    logger.log(Level.WARNING, "Error", e);
                     break;
                 }
             }

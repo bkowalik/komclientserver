@@ -8,13 +8,7 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
 
-/**
- * Created with IntelliJ IDEA.
- * User: Bartek
- * Date: 13.01.13
- * Time: 12:12
- * To change this template use File | Settings | File Templates.
- */
+
 public class Client {
     private final ObjectOutputStream output;
     private final ObjectInputStream input;

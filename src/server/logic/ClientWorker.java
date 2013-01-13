@@ -4,21 +4,22 @@ import common.protocol.ComStream;
 import common.protocol.request.Login;
 import common.protocol.response.Error;
 import common.protocol.response.Ok;
-import org.apache.log4j.Logger;
 
 import java.io.*;
 import java.net.Socket;
 import java.net.SocketTimeoutException;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class ClientWorker implements Runnable {
-    private static final Logger logger = Logger.getLogger(ClientWorker.class);
+    private static final Logger logger = Logger.getLogger(ClientWorker.class.getName());
     private  String id;
     private boolean running;
     private boolean authenticated;
     private final BlockingQueue<ComStream> incomming;
-    public final BlockingQueue<ComStream> toSend = new LinkedBlockingQueue<ComStream>();
+    private final BlockingQueue<ComStream> toSend = new LinkedBlockingQueue<ComStream>();
     private final Socket socket;
     private final ObjectInputStream input;
     private final ObjectOutputStream output;
@@ -31,8 +32,7 @@ public class ClientWorker implements Runnable {
         this.incomming = incomming;
         this.output = new ObjectOutputStream(new BufferedOutputStream(this.socket.getOutputStream()));
         this.output.flush();
-//        this.input = new ObjectInputStream(this.socket.getInputStream());
-        this.input = new ObjectInputStream(new BufferedInputStream(this.socket.getInputStream()));
+        this.input = new ObjectInputStream(this.socket.getInputStream());
         running = true;
     }
 
@@ -56,7 +56,6 @@ public class ClientWorker implements Runnable {
                     Login login = (Login) stream.obj;
                     if((login.username.equals("bartek") && login.password.equals("haslo"))
                             || (login.username.equals("misia") && login.password.equals("maslo"))) {
-                        logger.debug("Authenticated");
                         authenticated = true;
                         id = login.username;
                         Ok ok = new Ok(Ok.Type.AUTHENTICATED);
@@ -72,10 +71,10 @@ public class ClientWorker implements Runnable {
                         return;
                     }
                 } catch (IOException e) {
-                    logger.warn("Error", e);
+                    logger.log(Level.WARNING, "Error", e);
                     break;
                 } catch (ClassNotFoundException e) {
-                    logger.warn("Error", e);
+                    logger.log(Level.WARNING, "Error", e);
                     break;
                 }
             }
@@ -88,7 +87,6 @@ public class ClientWorker implements Runnable {
                     if(toSend.size() > 0) {
                         System.out.println("Wiadomości");
                         for(ComStream s : toSend) {
-                            //logger.debug(id + " wysyłam wiadomości");
                             output.writeObject(toSend.take());
                             output.flush();
                             output.reset();
@@ -104,23 +102,29 @@ public class ClientWorker implements Runnable {
                     }
                 } catch (SocketTimeoutException e) {
                 } catch(IOException e) {
-                    logger.debug("Error", e);
+                    logger.log(Level.WARNING, "Error", e);
                     return;
                 } catch(InterruptedException e) {
-                    logger.debug("Error", e);
+                    logger.log(Level.WARNING, "Error", e);
                     return;
                 } catch(ClassNotFoundException e) {
-                    logger.debug("Error", e);
+                    logger.log(Level.WARNING, "Error", e);
                     return;
                 }
             }
         } finally {
-            try {
-                running = false;
-                input.close();
-                output.close();
-                socket.close();
-            } catch (IOException e) { }
+            shutDownNow();
+        }
+    }
+
+    public synchronized void shutDownNow() {
+        running = false;
+        try {
+            input.close();
+            output.close();
+            socket.close();
+        } catch(IOException e) {
+            logger.log(Level.SEVERE, "Very bad!", e);
         }
     }
 

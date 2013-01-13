@@ -1,14 +1,15 @@
 package server.logic.handlers;
 
 
-import org.apache.log4j.Logger;
 import server.logic.ClientWorker;
 
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class GarbageHandler implements Runnable {
-    private static final Logger logger = Logger.getLogger(GarbageHandler.class);
+    private static final Logger logger = Logger.getLogger(GarbageHandler.class.getName());
     private final ConcurrentMap<String, ClientWorker> workers;
     private final int restTime;
 
@@ -27,7 +28,7 @@ public class GarbageHandler implements Runnable {
         try {
             TimeUnit.SECONDS.sleep(10);
         } catch (InterruptedException e) {
-            logger.debug("Error", e);
+            logger.log(Level.WARNING, "GarbageHandler interrupted", e);
         }
     }
 }

@@ -2,16 +2,17 @@ package client.logic;
 
 
 import common.protocol.ComStream;
-import org.apache.log4j.Logger;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.ObjectInput;
 import java.io.ObjectInputStream;
 import java.util.Queue;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class InWorker implements Runnable {
-    private static final Logger logger = Logger.getLogger(InWorker.class);
+    private static final Logger logger = Logger.getLogger(InWorker.class.getName());
     private final Queue<ComStream> inStreams;
     private final ObjectInput input;
 
@@ -28,13 +29,12 @@ public class InWorker implements Runnable {
             while(!Thread.interrupted()) {
                 try {
                     stream = (ComStream)input.readObject();
-                    logger.debug(stream.to + " odebrałem");
                     inStreams.add(stream);
                 } catch (ClassNotFoundException e) {
-                    logger.fatal("Error", e);
+                    logger.log(Level.SEVERE, "Error", e);
                     break;
                 } catch (IOException e) {
-                    logger.fatal("Error", e);
+                    logger.log(Level.WARNING, "Error", e);
                     break;
                 }
             }

@@ -1,7 +1,6 @@
 package server.logic;
 
 import common.protocol.ComStream;
-import org.apache.log4j.Logger;
 import server.logic.handlers.AuthHandler;
 import server.logic.handlers.Dispatcher;
 import server.logic.handlers.GarbageHandler;
@@ -11,8 +10,10 @@ import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.concurrent.*;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
-public class Server {
+public class Server extends AbstractServer {
 
     private class AcceptanceHandler implements Runnable {
         @Override
@@ -21,17 +22,17 @@ public class Server {
             try {
                 while(!Thread.interrupted()) {
                     while(pausing) wait();
-                    logger.debug("Wainting...");
+                    logger.info("Wainting...");
                     soc = server.accept();
-                    logger.debug("Client connected");
+                    logger.info("Client connected");
                     ClientWorker worker = new ClientWorker(soc, incomming);
                     exec.execute(worker);
                     unauthClients.add(worker);
                 }
             } catch (IOException e) {
-                logger.warn("Error", e);
+                logger.log(Level.WARNING, "Error", e);
             } catch (InterruptedException e) {
-                logger.warn("Error", e);
+                logger.log(Level.WARNING, "Error", e);
             } finally {
                 try { server.close(); } catch (IOException e) { e.printStackTrace(); }
             }
@@ -52,7 +53,7 @@ public class Server {
     private ServerSocket server;
     private boolean running;
     private boolean pausing;
-    private static final Logger logger = Logger.getLogger(Server.class);
+    private static final Logger logger = Logger.getLogger(Server.class.getName());
 
     public Server(int port) throws IOException {
         server = ServerSocketFactory.getDefault().createServerSocket(port);
@@ -67,7 +68,7 @@ public class Server {
         exec.execute(acceptanceHandler);
         exec.execute(authHandler);
         exec.execute(dispatcher);
-//        exec.execute(garbageHandler);
+        exec.execute(garbageHandler);
         logger.info("Server started");
     }
 
@@ -91,7 +92,7 @@ public class Server {
         exec.shutdownNow();
         try {
             server.close();
-        } catch (IOException e) { logger.debug("Error", e); }
+        } catch (IOException e) { logger.log(Level.SEVERE, "Error", e); }
         logger.info("Server stopped");
     }
 }

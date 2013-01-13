@@ -1,14 +1,14 @@
 package server.logic.handlers;
 
 
-import org.apache.log4j.Logger;
 import server.logic.ClientWorker;
 
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentMap;
+import java.util.logging.Logger;
 
 public class AuthHandler implements Runnable {
-    private static final Logger logger = Logger.getLogger(AuthHandler.class);
+    private static final Logger logger = Logger.getLogger(AuthHandler.class.getName());
     private final BlockingQueue<ClientWorker> unauthorized;
     private final ConcurrentMap<String, ClientWorker> authorized;
 
@@ -23,12 +23,12 @@ public class AuthHandler implements Runnable {
     @Override
     public void run() {
         ClientWorker worker;
-        logger.debug("AuthHandler started");
+        logger.config("AuthHandler started");
         while(!Thread.interrupted()) {
             try {
                 worker = unauthorized.take();
             } catch (InterruptedException e) {
-                logger.debug("Error", e);
+                e.printStackTrace();
                 break;
             }
 
@@ -41,7 +41,7 @@ public class AuthHandler implements Runnable {
                 continue;
             }
 
-            logger.debug("New authorized user " + worker.getId());
+            logger.info("Client " + worker.getId() + " authenticated.");
             authorized.put(worker.getId(), worker);
         }
     }

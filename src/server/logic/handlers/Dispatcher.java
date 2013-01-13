@@ -1,14 +1,15 @@
 package server.logic.handlers;
 
 import common.protocol.ComStream;
-import org.apache.log4j.Logger;
 import server.logic.ClientWorker;
 
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentMap;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class Dispatcher implements Runnable {
-    private static final Logger logger = Logger.getLogger(Dispatcher.class);
+    private static final Logger logger = Logger.getLogger(Dispatcher.class.getName());
     private final BlockingQueue<ComStream> toDispatch;
     private final ConcurrentMap<String, ClientWorker> clients;
 
@@ -23,23 +24,20 @@ public class Dispatcher implements Runnable {
     @Override
     public void run() {
         try {
-            logger.debug("Dispatcher started");
+            logger.config("Dispatcher started");
             while(!Thread.interrupted()) {
-                logger.debug("Taking message...");
                 ComStream comObj = toDispatch.take();
                 ClientWorker clientWorker = clients.get(comObj.to);
-                System.out.println("Dispatcher: Idzie wiadomość do " + comObj.to);
 
                 if(clientWorker == null) {
                     //TODO: dodawanie do bazy danych
                     continue;
                 }
                 clientWorker.toSend.put(comObj);
-                System.out.println("Dispatcher: Posłałem wiadomosć z " + comObj.from + " do " + clientWorker.getId());
-                System.out.println("Dispatcher: " + clientWorker.toSend.size());
             }
         } catch (InterruptedException e) {
             e.printStackTrace();
+            logger.log(Level.WARNING, "Dispatcher interrupted", e);
         }
     }
 }

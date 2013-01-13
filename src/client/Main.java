@@ -8,12 +8,12 @@ import common.protocol.ComStream;
 import common.protocol.Message;
 import common.protocol.request.Login;
 import common.protocol.response.Ok;
-import org.apache.log4j.Logger;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.Queue;
 import java.util.Scanner;
+import java.util.logging.Logger;
 
 public class Main {
     private static Logger logger = Logger.getLogger(Main.class.getName());
