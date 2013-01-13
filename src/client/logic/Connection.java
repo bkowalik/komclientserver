@@ -5,16 +5,14 @@ import common.exceptions.UnauthorizedException;
 import common.protocol.ComObject;
 import common.protocol.ComStream;
 import common.protocol.request.Login;
+import common.protocol.response.Ok;
 import org.apache.log4j.Logger;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.util.Queue;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.*;
 
 public class Connection {
     private static final Logger logger = Logger.getLogger(Connection.class);
@@ -23,12 +21,12 @@ public class Connection {
     private final String id;
     private final BlockingQueue<ComStream> outStreams;
     private boolean authorized;
-    private final BlockingQueue<ComStream> inStreams;
+    private final Queue<ComStream> inStreams;
 
     public Connection(String id) {
         this.id = id;
         outStreams = new LinkedBlockingQueue<ComStream>();
-        inStreams = new LinkedBlockingQueue<ComStream>();
+        inStreams = new ConcurrentLinkedQueue<ComStream>();
     }
 
     public void connect(InetSocketAddress address, int timeout) throws IOException {
@@ -54,9 +52,11 @@ public class Connection {
 
     public ComObject authenticate(Login login) throws InterruptedException {
         logger.debug("Authentication started");
-        ComStream stream = new ComStream(login.login, null, login);
+        ComStream stream = new ComStream(login.username, null, login);
         outStreams.add(stream);
-        ComObject ob = inStreams.take().obj;
+        while(inStreams.isEmpty());
+        ComObject ob = inStreams.poll().obj;
+        if(ob instanceof Ok) authorized = true;
         logger.debug("Authentication finished");
         return ob;
     }
@@ -67,7 +67,8 @@ public class Connection {
     }
 
     public void sendStream(ComStream stream) throws UnauthorizedException {
-        if(authorized) throw new UnauthorizedException();
+        if(!authorized) throw new UnauthorizedException();
+        logger.debug("Message from " + stream.from + " to " + stream.to);
         outStreams.add(stream);
     }
 }

@@ -8,14 +8,14 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.ObjectInput;
 import java.io.ObjectInputStream;
-import java.util.concurrent.BlockingQueue;
+import java.util.Queue;
 
 public class InWorker implements Runnable {
     private static final Logger logger = Logger.getLogger(InWorker.class);
-    private final BlockingQueue<ComStream> inStreams;
+    private final Queue<ComStream> inStreams;
     private final ObjectInput input;
 
-    public InWorker(InputStream in, BlockingQueue<ComStream> inStreams) throws IOException {
+    public InWorker(InputStream in, Queue<ComStream> inStreams) throws IOException {
         if(in == null) throw new NullPointerException("InputStream is null");
         input = new ObjectInputStream(in);
         this.inStreams = inStreams;
@@ -28,6 +28,7 @@ public class InWorker implements Runnable {
             while(!Thread.interrupted()) {
                 try {
                     stream = (ComStream)input.readObject();
+                    logger.debug(stream.to + " odebrałem");
                     inStreams.add(stream);
                 } catch (ClassNotFoundException e) {
                     logger.fatal("Error", e);

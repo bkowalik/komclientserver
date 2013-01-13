@@ -1,7 +1,12 @@
 package server;
 
+import server.logic.Server;
+
 public class Main {
     public static void main(String[] args) throws Exception {
-        System.out.println("server");
+        Server s = new Server(44321);
+        s.start();
+        System.in.read();
+        s.stop();
     }
 }

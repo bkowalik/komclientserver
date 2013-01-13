@@ -6,11 +6,11 @@ import java.io.Serializable;
 
 
 public class Login extends ComObject implements Serializable {
-    public final String login;
+    public final String username;
     public final String password;
 
     public Login(String login, String password) {
-        this.login = login;
+        this.username = login;
         this.password = password;
     }
 }

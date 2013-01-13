@@ -8,46 +8,38 @@ import org.apache.log4j.Logger;
 
 import java.io.*;
 import java.net.Socket;
-import java.util.Queue;
-import java.util.concurrent.ConcurrentLinkedQueue;
+import java.net.SocketTimeoutException;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 
 public class ClientWorker implements Runnable {
     private static final Logger logger = Logger.getLogger(ClientWorker.class);
     private  String id;
-    private Authenticator authenticator;
     private boolean running;
     private boolean authenticated;
-    private final Queue<ComStream> toSend = new ConcurrentLinkedQueue<ComStream>();
+    private final BlockingQueue<ComStream> incomming;
+    public final BlockingQueue<ComStream> toSend = new LinkedBlockingQueue<ComStream>();
     private final Socket socket;
     private final ObjectInputStream input;
     private final ObjectOutputStream output;
 
-    public ClientWorker(Socket socket, Authenticator authenticator) throws IOException {
-        this(null, socket, new ObjectOutputStream(new BufferedOutputStream(socket.getOutputStream())),
-                new ObjectInputStream(socket.getInputStream()));
-        this.authenticator = authenticator;
-    }
+    public ClientWorker(Socket socket, BlockingQueue<ComStream> incomming) throws IOException {
+        if(socket == null) throw new NullPointerException("Socket cannot be null");
+        if(incomming == null) throw new NullPointerException("Incomming messages queue cannot be null");
 
-    public ClientWorker(String id, Socket socket, OutputStream output, InputStream input) throws IOException {
-        this(id, socket, new ObjectOutputStream(new BufferedOutputStream(output)),
-                new ObjectInputStream(input));
-    }
-
-    public ClientWorker(String id, Socket socket, ObjectOutputStream output, ObjectInputStream input) throws IOException {
-        this.id = id;
-        this.output = output;
-        this.output.flush();
-        this.input = input;
         this.socket = socket;
-        this.socket.setSoTimeout(Server.DEFAULT_IDLE_TIMEOUT);
+        this.incomming = incomming;
+        this.output = new ObjectOutputStream(new BufferedOutputStream(this.socket.getOutputStream()));
+        this.output.flush();
+//        this.input = new ObjectInputStream(this.socket.getInputStream());
+        this.input = new ObjectInputStream(new BufferedInputStream(this.socket.getInputStream()));
+        running = true;
     }
+
 
     @Override
     public void run() {
-        running = true;
         try {
-            try { socket.setSoTimeout(Server.DEFAULT_IDLE_TIMEOUT); } catch (IOException e) { logger.warn("Error", e); }
-            logger.debug("Starting authentication");
             while(!Thread.interrupted() && !authenticated) {
                 try {
                     ComStream stream = (ComStream) input.readObject();
@@ -62,29 +54,65 @@ public class ClientWorker implements Runnable {
                     }
 
                     Login login = (Login) stream.obj;
-                    if(login.login.equals("bartek") && login.password.equals("haslo")) {
+                    if((login.username.equals("bartek") && login.password.equals("haslo"))
+                            || (login.username.equals("misia") && login.password.equals("maslo"))) {
+                        logger.debug("Authenticated");
                         authenticated = true;
+                        id = login.username;
                         Ok ok = new Ok(Ok.Type.AUTHENTICATED);
-                        output.writeObject(new ComStream(Server.SERVER_IDENTYFICATOR, null, ok));
+                        output.writeObject(new ComStream(Server.SERVER_IDENTYFICATOR, login.username, ok));
                         output.flush();
                         output.reset();
                         break;
                     } else {
                         Error e = new Error(Error.Types.NOT_AUTHORIZED);
-                        output.writeObject(new ComStream(Server.SERVER_IDENTYFICATOR, null, e));
+                        output.writeObject(new ComStream(Server.SERVER_IDENTYFICATOR, login.username, e));
                         output.flush();
                         output.reset();
+                        return;
                     }
                 } catch (IOException e) {
                     logger.warn("Error", e);
+                    break;
                 } catch (ClassNotFoundException e) {
                     logger.warn("Error", e);
+                    break;
                 }
             }
 
-            try { socket.setSoTimeout(0); } catch (IOException e) { e.printStackTrace(); }
+            ComStream stream;
+            Object obj;
+            try { socket.setSoTimeout(5); } catch (IOException e) { e.printStackTrace(); }
             while(!Thread.interrupted() && authenticated) {
-
+                try {
+                    if(toSend.size() > 0) {
+                        System.out.println("Wiadomości");
+                        for(ComStream s : toSend) {
+                            //logger.debug(id + " wysyłam wiadomości");
+                            output.writeObject(toSend.take());
+                            output.flush();
+                            output.reset();
+                        }
+                        toSend.clear();
+                    }
+                    obj = null;
+                    obj = input.readObject();
+                    if(obj != null) {
+                        if(!(obj instanceof ComStream)) continue;
+                        stream = (ComStream) obj;
+                        incomming.add(stream);
+                    }
+                } catch (SocketTimeoutException e) {
+                } catch(IOException e) {
+                    logger.debug("Error", e);
+                    return;
+                } catch(InterruptedException e) {
+                    logger.debug("Error", e);
+                    return;
+                } catch(ClassNotFoundException e) {
+                    logger.debug("Error", e);
+                    return;
+                }
             }
         } finally {
             try {
@@ -96,12 +124,20 @@ public class ClientWorker implements Runnable {
         }
     }
 
-    public boolean isActive() {
+    public synchronized boolean isActive() {
         return running;
+    }
+
+    public synchronized boolean isAuthenticated() {
+        return authenticated;
     }
 
     public void sendResponse(ComStream comObj) {
         toSend.add(comObj);
+    }
+
+    public String getId() {
+        return id;
     }
 
     @Override
