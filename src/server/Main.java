@@ -1,6 +1,6 @@
 package server;
 
-import server.logic.Server;
+import server.connection.Server;
 
 public class Main {
     public static void main(String[] args) throws Exception {

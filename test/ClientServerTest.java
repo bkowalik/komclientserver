@@ -1,17 +1,21 @@
 import client.logic.Connection;
 import common.protocol.ComObject;
+import common.protocol.request.CreateAccount;
 import common.protocol.request.Login;
 import common.protocol.response.Error;
 import common.protocol.response.Ok;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
-import server.logic.Server;
+import server.connection.Server;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
+import java.util.concurrent.TimeUnit;
+import java.util.logging.LogManager;
 
 @RunWith(JUnit4.class)
 public class ClientServerTest {
@@ -20,6 +24,7 @@ public class ClientServerTest {
 
     @Before
     public void beforeTest() {
+
         try {
             server = new Server(44321);
             server.start();
@@ -31,7 +36,7 @@ public class ClientServerTest {
         }
     }
 
-    @Test
+    @Ignore
     public void authentication() {
         try {
             ComObject obj = client.authenticate(new Login("bartek", "zle"));
@@ -49,6 +54,29 @@ public class ClientServerTest {
         } catch(InterruptedException e) { e.printStackTrace(); }
     }
 
+    @Test
+    public void createAccount() {
+        ComObject obj = null;
+        try {
+            obj = client.createAccount(new CreateAccount("nowy", "haselko"));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        org.junit.Assert.assertNotNull(obj);
+
+        if(obj instanceof Ok) {
+            System.out.println("OK response");
+            Ok ok = (Ok) obj;
+            org.junit.Assert.assertEquals(Ok.Type.ACCOUNT_CREATED, ok.type);
+        }
+
+        if(obj instanceof Error) {
+            System.out.println("ERROR response");
+            Error e = (Error) obj;
+            org.junit.Assert.assertEquals("Login exists", Error.Types.LOGIN_EXISTS, e.type);
+        }
+    }
 
     @After
     public void afterTest() {

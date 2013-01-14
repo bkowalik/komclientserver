@@ -1,9 +1,9 @@
-package server.logic;
+package server.connection;
 
 import common.protocol.ComStream;
-import server.logic.handlers.AuthHandler;
-import server.logic.handlers.Dispatcher;
-import server.logic.handlers.GarbageHandler;
+import server.connection.handlers.AuthHandler;
+import server.connection.handlers.Dispatcher;
+import server.connection.handlers.GarbageHandler;
 
 import javax.net.ServerSocketFactory;
 import java.io.IOException;
@@ -13,7 +13,7 @@ import java.util.concurrent.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-public class Server extends AbstractServer {
+public class Server {
 
     private class AcceptanceHandler implements Runnable {
         @Override
@@ -79,7 +79,7 @@ public class Server extends AbstractServer {
     public synchronized void pause() {
         if (!running) return;
         pausing = true;
-        logger.info("Server paused");
+        logger.info("S1erver paused");
     }
 
     public synchronized void resume() {

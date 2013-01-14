@@ -1,8 +1,9 @@
-package server.logic.handlers;
+package server.connection.handlers;
 
 import common.protocol.ComStream;
-import server.logic.ClientWorker;
+import server.connection.ClientWorker;
 
+import java.io.IOException;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentMap;
 import java.util.logging.Level;
@@ -33,10 +34,14 @@ public class Dispatcher implements Runnable {
                     //TODO: dodawanie do bazy danych
                     continue;
                 }
-                clientWorker.toSend.put(comObj);
+
+                try {
+                    clientWorker.sendResponse(comObj);
+                } catch (IOException e) {
+                    logger.log(Level.WARNING, "Error", e);
+                }
             }
         } catch (InterruptedException e) {
-            e.printStackTrace();
             logger.log(Level.WARNING, "Dispatcher interrupted", e);
         }
     }

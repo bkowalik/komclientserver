@@ -4,6 +4,7 @@ package client.logic;
 import common.exceptions.UnauthorizedException;
 import common.protocol.ComObject;
 import common.protocol.ComStream;
+import common.protocol.request.CreateAccount;
 import common.protocol.request.Login;
 import common.protocol.response.Ok;
 
@@ -20,6 +21,7 @@ public class Connection {
     private final Socket socket = new Socket();
     private final String id;
     private final BlockingQueue<ComStream> outStreams;
+    private boolean connected;
     private boolean authorized;
     private final Queue<ComStream> inStreams;
 
@@ -40,6 +42,7 @@ public class Connection {
 
         exec.execute(outWorker);
         exec.execute(inWorker);
+        connected = true;
         logger.info("Connecting finished");
     }
 
@@ -49,10 +52,15 @@ public class Connection {
             socket.close();
         } catch (IOException e) {
         }
+        connected = false;
     }
 
     public ComObject authenticate(Login login) throws InterruptedException {
-        logger.info("Authentication started");
+        logger.info("Authenticating...");
+        if(!connected) {
+            logger.warning("Client not connected");
+            return null;
+        }
         ComStream stream = new ComStream(login.username, null, login);
         outStreams.add(stream);
         while (inStreams.isEmpty()) ;
@@ -60,6 +68,20 @@ public class Connection {
         if (ob instanceof Ok) authorized = true;
         logger.info("Authentication finished");
         return ob;
+    }
+
+    public ComObject createAccount(CreateAccount acc) throws IOException {
+        logger.info("Creating account...");
+        ComStream stream = new ComStream(acc.username, null, acc);
+        outStreams.add(stream);
+        while(inStreams.isEmpty()) ;
+        ComObject ob = inStreams.poll().obj;
+        logger.info("Creating account finished");
+        return ob;
+    }
+
+    public synchronized boolean isConnected() {
+        return connected;
     }
 
     public Queue<ComStream> getInStreams() throws UnauthorizedException {

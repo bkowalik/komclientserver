@@ -1,4 +1,4 @@
-package server.logic.auth;
+package server.auth;
 
 
 public class ClinetAuthenticator implements Authenticator {

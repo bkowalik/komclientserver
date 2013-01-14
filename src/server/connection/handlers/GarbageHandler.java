@@ -1,7 +1,7 @@
-package server.logic.handlers;
+package server.connection.handlers;
 
 
-import server.logic.ClientWorker;
+import server.connection.ClientWorker;
 
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
