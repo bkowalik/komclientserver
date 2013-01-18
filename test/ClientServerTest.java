@@ -11,6 +11,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 import server.connection.Server;
+import server.db.ConnectionPool;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -21,25 +22,26 @@ import java.util.logging.LogManager;
 public class ClientServerTest {
     private Connection client;
     private Server server;
+    private ConnectionPool pool;
 
     @Before
     public void beforeTest() {
-
-        try {
-            server = new Server(44321);
-            server.start();
-
-            client = new Connection("Client 1");
-            client.connect(new InetSocketAddress("localhost", 44321), 0);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+//        try {
+//            server = new Server(44321);
+//            server.start();
+//
+//            client = new Connection("Client 1");
+//            client.connect(new InetSocketAddress("localhost", 44321), 0);
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        }
+        pool = new ConnectionPool();
     }
 
     @Ignore
     public void authentication() {
         try {
-            ComObject obj = client.authenticate(new Login("bartek", "zle"));
+            ComObject obj = client.authenticate(new Login("bartek", "haslo"));
             org.junit.Assert.assertNotNull(obj);
             if(obj instanceof Ok) {
                 System.out.println("Ok response");
@@ -54,7 +56,7 @@ public class ClientServerTest {
         } catch(InterruptedException e) { e.printStackTrace(); }
     }
 
-    @Test
+    @Ignore
     public void createAccount() {
         ComObject obj = null;
         try {
@@ -78,9 +80,16 @@ public class ClientServerTest {
         }
     }
 
+    @Test
+    public void dbTest() {
+
+    }
+
     @After
     public void afterTest() {
-        client.disconnect();
-        server.stop();
+        pool.stop();
+//        client.disconnect();
+//        server.stop();
+
     }
 }

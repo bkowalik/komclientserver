@@ -33,6 +33,7 @@ public class AuthHandler implements Runnable {
             }
 
             if (!worker.isActive()) {
+                worker.shutDownNow();
                 continue;
             }
 
