@@ -6,6 +6,7 @@ import common.protocol.request.Login;
 import common.protocol.response.Error;
 import common.protocol.response.Ok;
 
+import javax.net.ssl.SSLSocket;
 import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -24,6 +25,7 @@ public class ClientWorker implements Runnable {
     private int attempts = 1;
     private final BlockingQueue<ComStream> incomming;
     private final Socket socket;
+//    private final SSLSocket socket;
     private final ObjectInputStream input;
     private final ObjectOutputStream output;
 

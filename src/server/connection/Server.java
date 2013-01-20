@@ -6,6 +6,9 @@ import server.connection.handlers.Dispatcher;
 import server.connection.handlers.GarbageHandler;
 
 import javax.net.ServerSocketFactory;
+import javax.net.ssl.SSLServerSocket;
+import javax.net.ssl.SSLServerSocketFactory;
+import javax.net.ssl.SSLSocket;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -55,12 +58,19 @@ public class Server {
     private AuthHandler authHandler;
     private Dispatcher dispatcher;
     private ServerSocket server;
+//    private SSLServerSocket server;
     private boolean running;
     private boolean pausing;
     private static final Logger logger = Logger.getLogger(Server.class.getName());
 
     public Server(int port) throws IOException {
-        server = ServerSocketFactory.getDefault().createServerSocket(port);
+//        server = ServerSocketFactory.getDefault().createServerSocket(port);
+//        System.setProperty("javax.net.debug", "ssl");
+        System.setProperty("javax.net.ssl.keyStore", "C:/Users/Bartek/Documents/git_repo/komunikator2/ClinetServer2");
+        System.setProperty("javax.net.ssl.keyStorePassword", "admin1admin2");
+        System.setProperty("javax.net.ssl.trustStore", "C:/Users/Bartek/Documents/git_repo/komunikator2/ClinetServer2");
+        System.setProperty("javax.net.ssl.trustStorePassword", "admin1admin2");
+        server = SSLServerSocketFactory.getDefault().createServerSocket(port);
         acceptanceHandler = new AcceptanceHandler();
         garbageHandler = new GarbageHandler(clients, 10);
         dispatcher = new Dispatcher(incomming, clients);

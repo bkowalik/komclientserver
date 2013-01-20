@@ -1,6 +1,7 @@
 package client;
 
 
+import client.gui.MainWindow;
 import client.logic.Connection;
 import common.exceptions.UnauthorizedException;
 import common.protocol.ComObject;
@@ -19,7 +20,13 @@ public class Main {
     private static Logger logger = Logger.getLogger(Main.class.getName());
 
     public static void main(String[] args) throws Exception {
-        runConsole(args);
+//        runConsole(args);
+        runGUI();
+    }
+    
+    public static void runGUI() {
+        MainWindow mw = new MainWindow();
+        mw.setVisible(true);
     }
 
     public static void runConsole(String[] args) throws IOException, InterruptedException, UnauthorizedException {
@@ -40,7 +47,7 @@ public class Main {
         System.out.println("Uwieżytelnianie...");
         ComObject obj = c.authenticate(new Login(login, pass));
         if (!(obj instanceof Ok)) throw new UnauthorizedException();
-        System.out.println("Uwieżytelniono");
+        System.out.println("Uwierzytelniono");
         System.out.println();
 
         String to;
@@ -48,7 +55,7 @@ public class Main {
         Queue<ComStream> streams = c.getInStreams();
         try {
             while (true) {
-                if (!streams.isEmpty()) System.out.println("Odczytuje wiadomości:");
+                if (!streams.isEmpty()) System.out.println("Odczytuję wiadomości:");
                 while (!streams.isEmpty()) {
                     ComStream st = streams.poll();
                     Message m = (Message) st.obj;
@@ -58,7 +65,7 @@ public class Main {
                 System.out.print("Do: ");
                 to = in.nextLine();
 
-                System.out.print("Wiadomość: ");
+                System.out.print("Treść: ");
                 msg = in.nextLine();
 
                 if (to.equals("") || msg.equals("")) continue;

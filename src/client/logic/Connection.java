@@ -8,6 +8,8 @@ import common.protocol.request.CreateAccount;
 import common.protocol.request.Login;
 import common.protocol.response.Ok;
 
+import javax.net.ssl.SSLSocket;
+import javax.net.ssl.SSLSocketFactory;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.Socket;
@@ -18,15 +20,20 @@ import java.util.logging.Logger;
 public class Connection {
     private static final Logger logger = Logger.getLogger(Connection.class.getName());
     private final ExecutorService exec = Executors.newFixedThreadPool(2);
-    private final Socket socket = new Socket();
+    private final Socket socket;
     private final String id;
     private final BlockingQueue<ComStream> outStreams;
     private boolean connected;
     private boolean authorized;
     private final Queue<ComStream> inStreams;
 
-    public Connection(String id) {
+    public Connection(String id) throws IOException {
         this.id = id;
+        System.setProperty("javax.net.ssl.keyStore", "C:/Users/Bartek/Documents/git_repo/komunikator2/ClinetServer2");
+        System.setProperty("javax.net.ssl.keyStorePassword", "admin1admin2");
+        System.setProperty("javax.net.ssl.trustStore", "C:/Users/Bartek/Documents/git_repo/komunikator2/ClinetServer2");
+        System.setProperty("javax.net.ssl.trustStorePassword", "admin1admin2");
+        socket  = SSLSocketFactory.getDefault().createSocket();
         outStreams = new LinkedBlockingQueue<ComStream>();
         inStreams = new ConcurrentLinkedQueue<ComStream>();
     }
