@@ -1,8 +1,12 @@
 package client.gui;
 
+import common.protocol.request.Login;
+
 import java.awt.BorderLayout;
 import java.awt.Font;
 import java.awt.Frame;
+import java.io.IOException;
+import java.net.InetSocketAddress;
 
 import javax.swing.GroupLayout;
 import javax.swing.GroupLayout.Alignment;
@@ -12,16 +16,19 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 import javax.swing.LayoutStyle.ComponentPlacement;
+import java.awt.event.ActionListener;
+import java.awt.event.ActionEvent;
 
 public class AuthDialog extends JDialog {
     private static final int WIDTH = 240;
     private static final int HEIGHT = 180;
-    
+    private MainWindow mainWindow;
     private JTextField username;
     private JTextField password;
 
-    public AuthDialog(Frame parent) {
+    public AuthDialog(MainWindow parent) {
         super(parent, true);
+        mainWindow = parent;
         setAlwaysOnTop(true);
         setTitle("Logowanie");
         setLocationRelativeTo(parent);
@@ -43,6 +50,11 @@ public class AuthDialog extends JDialog {
         password.setColumns(10);
         
         JButton btnZaloguj = new JButton("Zaloguj");
+        btnZaloguj.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent arg0) {
+                authenticate();
+            }
+        });
         
         JButton btnAnuluj = new JButton("Anuluj");
         GroupLayout gl_panel = new GroupLayout(panel);
@@ -87,11 +99,14 @@ public class AuthDialog extends JDialog {
         setSize(WIDTH, HEIGHT);
     }
     
-    public String getUsername() {
-        return username.getText();
-    }
-    
-    public String getPassword() {
-        return password.getText();
+    private void authenticate() {
+        try {
+            if(!mainWindow.connection.isConnected()) mainWindow.connection.connect(new InetSocketAddress("localhost", 44321), 0);
+            mainWindow.connection.authenticate(new Login(username.getText(), password.getText()));
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 }

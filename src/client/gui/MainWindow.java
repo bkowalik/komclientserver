@@ -10,6 +10,7 @@ import java.awt.event.MouseEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.File;
+import java.io.IOException;
 import java.lang.ref.WeakReference;
 import java.util.HashMap;
 import java.util.Map;
@@ -27,22 +28,33 @@ import javax.swing.JSeparator;
 import javax.swing.SwingUtilities;
 
 import client.gui.ContactListModel.Contact;
+import client.logic.Connection;
+import client.logic.events.LogicEvent;
+import client.logic.events.LogicEventListener;
+import client.logic.events.MessageEvent;
+import client.logic.events.MessageEventListener;
+import common.protocol.ComObject;
+import common.protocol.ComStream;
+import common.protocol.Message;
 
 @SuppressWarnings("serial")
 public class MainWindow extends JFrame {
     protected static String contactsFile = "contacts.xml";
     protected static String myId = "Klient";
-    public static final String APP_NAME = "Bartek";
+    public static final String APP_NAME = "Clinet";
     public static final int HEIGHT = 400;
     public static final int WIDTH = 250;
     private State state;
     private AuthDialog authDialog = new AuthDialog(this);
+    Connection connection;
     private final TalkDialog talkDialog = new TalkDialog(this);
     private final ContactPopup contactPopup = new ContactPopup();
     private final ContactListModel contactsListModel = new ContactListModel(contactsFile);
     private final ListPopup listPopup = new ListPopup();
     private final JList contactsList;
     private final Map<String, WeakReference<TalkPanel>> talks = new HashMap<String, WeakReference<TalkPanel>>();
+    private JMenuItem btnLogin;
+    private JMenuItem btnLogout;
     
     private enum State {
         AUTHORIZED, NOT_AUTHORIZED;
@@ -66,17 +78,17 @@ public class MainWindow extends JFrame {
         JMenu mnClinet = new JMenu("Clinet");
         menuBar.add(mnClinet);
         
-        JMenuItem mntmZaloguj = new JMenuItem("Logowanie");
-        mntmZaloguj.addActionListener(new ActionListener() {
+        btnLogin = new JMenuItem("Logowanie");
+        btnLogin.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent arg0) {
                 authDialog.setVisible(true);
             }
         });
-        mnClinet.add(mntmZaloguj);
+        mnClinet.add(btnLogin);
         
-        JMenuItem mntmWyloguj = new JMenuItem("Wyloguj");
-        mntmWyloguj.setEnabled(false);
-        mnClinet.add(mntmWyloguj);
+        btnLogout = new JMenuItem("Wyloguj");
+        btnLogout.setEnabled(false);
+        mnClinet.add(btnLogout);
         
         JMenu mnKontakty = new JMenu("Kontakty");
         mnClinet.add(mnKontakty);
@@ -111,9 +123,16 @@ public class MainWindow extends JFrame {
         
         addWindowListener(new WindowEvents());
         setCenter();
-        setGUIState(State.NOT_AUTHORIZED);
+        setGUIState(State.NOT_AUTHORIZED); // TODO: zmienić po zdebugowaniu
         if(new File(contactsFile).exists())
             contactsListModel.loadFromFile(contactsFile);
+        try {
+            connection = new Connection(myId);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        connection.addLogicEventListener(new LogicEvents());
+        connection.addMessageEventListener(new MessageEvents());
     }
     
     private void exportContacts() {
@@ -163,11 +182,15 @@ public class MainWindow extends JFrame {
     private void setGUIState(State s) {
         switch(s) {
         case AUTHORIZED:
+            btnLogout.setEnabled(true);
+            btnLogin.setEnabled(false);
             contactsList.setEnabled(true);
             state = State.AUTHORIZED;
             break;
         case NOT_AUTHORIZED:
-//            contactsList.setEnabled(false);
+            btnLogout.setEnabled(false);
+            btnLogin.setEnabled(true);
+            contactsList.setEnabled(false);
             state = State.NOT_AUTHORIZED;
             break;
         }
@@ -180,6 +203,52 @@ public class MainWindow extends JFrame {
         
         setBounds(x, y, WIDTH, HEIGHT);
     }
+
+    private TalkPanel talk(Contact c) {
+        WeakReference<TalkPanel> tpw = talks.get(c.getId());
+        if(tpw == null) {
+            tpw = new WeakReference<TalkPanel>(new TalkPanel(c, connection));
+            talks.put(c.getId(), tpw);
+        }
+        TalkPanel p = tpw.get();
+        talkDialog.addTalk(p);
+        if(!talkDialog.isVisible()) talkDialog.setVisible(true);
+        return p;
+    }
+
+    private class LogicEvents implements LogicEventListener {
+        @Override
+        public void onLogicEvent(LogicEvent e) {
+            switch (e.type) {
+                case AUTH_SUCCESS:
+                    setGUIState(State.AUTHORIZED);
+                    break;
+                case AUTH_FAILURE:
+                    setGUIState(State.NOT_AUTHORIZED);
+                    break;
+                case DISCONNECT:
+                    setGUIState(State.NOT_AUTHORIZED);
+                    break;
+                case CONNECT:
+                    setGUIState(State.AUTHORIZED);
+                    break;
+            }
+        }
+    }
+
+    private class MessageEvents implements MessageEventListener {
+        @Override
+        public void onMessageIncomming(MessageEvent e) {
+            String from = e.stream.from;
+            ComObject obj = e.stream.obj;
+            if(obj instanceof Message) {
+                Message msg = (Message)obj;
+                TalkPanel p = talk(new Contact(from, from));
+                p.addMessage(from, msg.body);
+                talkDialog.notify(p);
+            }
+        }
+    }
      
     private class WindowEvents extends WindowAdapter {
         @Override
@@ -191,16 +260,11 @@ public class MainWindow extends JFrame {
     private class ListMouseEvents extends MouseAdapter {
         @Override
         public void mouseClicked(MouseEvent e) {
+            if(state == State.NOT_AUTHORIZED) return;
             if((e.getClickCount() == 2) && SwingUtilities.isLeftMouseButton(e)) {
                 int i = contactsList.locationToIndex(e.getPoint());
                 Contact c = (Contact)contactsListModel.getElementAt(i);
-                WeakReference<TalkPanel> tp = talks.get(c.getId());
-                if(tp == null) { 
-                    tp = new WeakReference<TalkPanel>(new TalkPanel(c));
-                    talks.put(c.getId(), tp);
-                }
-                talkDialog.addTalk(tp.get());
-                if(!talkDialog.isVisible()) talkDialog.setVisible(true);
+                talk(c);
             } else if((e.getClickCount() == 1) && SwingUtilities.isRightMouseButton(e)) {
                 int index = contactsList.locationToIndex(e.getPoint());
                 if(contactsList.getCellBounds(index, index).contains(e.getPoint())) {

@@ -22,14 +22,12 @@ public class InWorker implements Runnable {
     private final Queue<ComStream> inStreams;
     private final ObjectInput input;
     private final List<LogicEventListener> logicListeners;
-    private final List<MessageEventListener> messageListeners;
 
-    public InWorker(InputStream in, Queue<ComStream> inStreams, List<LogicEventListener> logicListeners, List<MessageEventListener> messageListeners) throws IOException {
+    public InWorker(InputStream in, Queue<ComStream> inStreams, List<LogicEventListener> logicListeners) throws IOException {
         if (in == null) throw new NullPointerException("InputStream is null");
         input = new ObjectInputStream(in);
         this.inStreams = inStreams;
         this.logicListeners = logicListeners;
-        this.messageListeners = messageListeners;
     }
 
     @Override
@@ -42,11 +40,10 @@ public class InWorker implements Runnable {
                     inStreams.add(stream);
                 } catch (ClassNotFoundException e) {
                     logger.log(Level.SEVERE, "Failure", e);
-                    fireLogicEvent(new LogicEvent(this));
                     break;
                 } catch (IOException e) {
                     logger.log(Level.WARNING, "Failure", e);
-                    fireLogicEvent(new LogicEvent(this));
+                    fireLogicEvent(new LogicEvent(this, LogicEvent.Type.DISCONNECT));
                     break;
                 }
             }
@@ -55,7 +52,6 @@ public class InWorker implements Runnable {
                 input.close();
             } catch (IOException e) {
                 logger.log(Level.SEVERE, "Failure", e);
-                fireLogicEvent(new LogicEvent(this));
             }
         }
     }
@@ -63,12 +59,6 @@ public class InWorker implements Runnable {
     private synchronized void fireLogicEvent(LogicEvent e) {
         for(LogicEventListener l : logicListeners) {
             l.onLogicEvent(e);
-        }
-    }
-
-    private synchronized void fireMessageEvent(MessageEvent e) {
-        for(MessageEventListener l : messageListeners) {
-            l.onMessageIncomming(e);
         }
     }
 }

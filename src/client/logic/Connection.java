@@ -29,13 +29,13 @@ import common.protocol.response.Ok;
 
 public class Connection {
     private static final Logger logger = Logger.getLogger(Connection.class.getName());
-    private final ExecutorService exec = Executors.newFixedThreadPool(2);
+    private final ExecutorService exec = Executors.newFixedThreadPool(3);
     private final Socket socket;
     private final String id;
     private final BlockingQueue<ComStream> outStreams;
     private boolean connected;
     private boolean authorized;
-    private final Queue<ComStream> inStreams;
+    private final BlockingQueue<ComStream> inStreams;
     protected List<LogicEventListener> logicListeners = new LinkedList<LogicEventListener>();
     protected List<MessageEventListener> messagesListener = new LinkedList<MessageEventListener>();
 
@@ -47,7 +47,7 @@ public class Connection {
         System.setProperty("javax.net.ssl.trustStorePassword", "admin1admin2");
         socket  = SSLSocketFactory.getDefault().createSocket();
         outStreams = new LinkedBlockingQueue<ComStream>();
-        inStreams = new ConcurrentLinkedQueue<ComStream>();
+        inStreams = new LinkedBlockingQueue<ComStream>();
     }
 
     public void connect(InetSocketAddress address, int timeout) throws IOException {
@@ -56,7 +56,7 @@ public class Connection {
 
         logger.info("Connected");
         OutWorker outWorker = new OutWorker(socket.getOutputStream(), outStreams, logicListeners);
-        InWorker inWorker = new InWorker(socket.getInputStream(), inStreams, logicListeners, messagesListener);
+        InWorker inWorker = new InWorker(socket.getInputStream(), inStreams, logicListeners);
         logger.info("Workers connected");
 
         exec.execute(outWorker);
@@ -82,30 +82,29 @@ public class Connection {
         }
         ComStream stream = new ComStream(login.username, null, login);
         outStreams.add(stream);
-        while (inStreams.isEmpty()) ;
-        ComObject ob = inStreams.poll().obj;
+        ComObject ob = inStreams.take().obj;
         if (ob instanceof Ok) {
-            fireLogicEvent(new LogicEvent(this));
+            fireLogicEvent(new LogicEvent(this, LogicEvent.Type.AUTH_SUCCESS));
+            exec.execute(new Dispatcher(inStreams, messagesListener));
             authorized = true;
         }
         if (ob instanceof Failure) {
-            fireLogicEvent(new LogicEvent(this));
+            fireLogicEvent(new LogicEvent(this, LogicEvent.Type.AUTH_FAILURE));
         }
         logger.info("Authentication finished");
         return ob;
     }
 
-    public ComObject createAccount(CreateAccount acc) throws IOException {
+    public ComObject createAccount(CreateAccount acc) throws InterruptedException {
         logger.info("Creating account...");
         ComStream stream = new ComStream(acc.username, null, acc);
         outStreams.add(stream);
-        while(inStreams.isEmpty()) ;
-        ComObject ob = inStreams.poll().obj;
+        ComObject ob = inStreams.take().obj;
         if(ob instanceof Ok) {
-            fireLogicEvent(new LogicEvent(this));
+            fireLogicEvent(new LogicEvent(this, LogicEvent.Type.ACCOUNT_CREATED));
         }
         if(ob instanceof Failure) {
-            fireLogicEvent(new LogicEvent(this));
+            fireLogicEvent(new LogicEvent(this, LogicEvent.Type.ACCOUNT_EXIST));
         }
         logger.info("Creating account finished");
         return ob;

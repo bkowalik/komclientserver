@@ -10,16 +10,22 @@ import javax.swing.JSplitPane;
 import javax.swing.JTextArea;
 
 import client.gui.ContactListModel.Contact;
+import client.logic.Connection;
+import common.exceptions.UnauthorizedException;
+import common.protocol.ComStream;
+import common.protocol.Message;
 
 @SuppressWarnings("serial")
 public class TalkPanel extends JPanel {
     private JTextArea chatArea;
     private final JTextArea msgArea;
     private final Contact talkWith;
-    
-    public TalkPanel(Contact talkWith) {
+    private final Connection con;
+
+    public TalkPanel(Contact talkWith, Connection con) {
         super(new BorderLayout());
         this.talkWith = talkWith;
+        this.con = con;
         JSplitPane mainSplit = new JSplitPane(JSplitPane.VERTICAL_SPLIT);
         add(mainSplit, BorderLayout.CENTER);
         mainSplit.setResizeWeight(0.7);
@@ -68,7 +74,16 @@ public class TalkPanel extends JPanel {
         msgArea.setText("");
         chatArea.append(MainWindow.myId + ": " + msg + '\n');
         chatArea.setCaretPosition(chatArea.getDocument().getLength());
-        //TODO: wysłanie wiadomości
+        try {
+            con.sendStream(new ComStream(MainWindow.myId, talkWith.getId(), new Message(msg)));
+        } catch (UnauthorizedException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void addMessage(String from, String msg) {
+        chatArea.append(from + ": " + msg + '\n');
+        chatArea.setCaretPosition(chatArea.getDocument().getLength());
     }
     
     public String getHistory() {

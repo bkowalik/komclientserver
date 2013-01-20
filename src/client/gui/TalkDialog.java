@@ -1,7 +1,6 @@
 package client.gui;
 
-import java.awt.BorderLayout;
-import java.awt.Frame;
+import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
@@ -24,11 +23,16 @@ public class TalkDialog extends JFrame {
     
     public void addTalk(TalkPanel p) {
         if(talkTabs.indexOfTabComponent(p) == -1) {
-            talkTabs.add(p.getTalkWithName(), p); 
+            talkTabs.add(p.getTalkWithName(), p);
         }
-        talkTabs.setSelectedComponent(p);
     }
-    
+
+    public void notify(TalkPanel p) {
+        int i = talkTabs.indexOfComponent(p);
+        talkTabs.setBackgroundAt(i, Color.BLACK);
+        talkTabs.setForegroundAt(i, Color.WHITE);
+    }
+
     private class TalkTabsEvents extends MouseAdapter {
         @Override
         public void mouseClicked(MouseEvent e) {
