@@ -1,12 +1,12 @@
 package server.connection.handlers;
 
 
-import server.connection.ClientWorker;
-
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
+import server.connection.ClientWorker;
 
 public class GarbageHandler implements Runnable {
     private static final Logger logger = Logger.getLogger(GarbageHandler.class.getName());

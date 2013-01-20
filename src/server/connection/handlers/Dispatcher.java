@@ -1,13 +1,14 @@
 package server.connection.handlers;
 
-import common.protocol.ComStream;
-import server.connection.ClientWorker;
-
 import java.io.IOException;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
+import server.connection.ClientWorker;
+
+import common.protocol.ComStream;
 
 public class Dispatcher implements Runnable {
     private static final Logger logger = Logger.getLogger(Dispatcher.class.getName());
@@ -38,7 +39,7 @@ public class Dispatcher implements Runnable {
                 try {
                     clientWorker.sendResponse(comObj);
                 } catch (IOException e) {
-                    logger.log(Level.WARNING, "Error", e);
+                    logger.log(Level.WARNING, "Failure", e);
                 }
             }
         } catch (InterruptedException e) {

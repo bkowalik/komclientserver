@@ -1,20 +1,21 @@
 package client;
 
 
+import java.io.IOException;
+import java.net.InetSocketAddress;
+import java.util.Queue;
+import java.util.Scanner;
+import java.util.logging.Logger;
+
 import client.gui.MainWindow;
 import client.logic.Connection;
+
 import common.exceptions.UnauthorizedException;
 import common.protocol.ComObject;
 import common.protocol.ComStream;
 import common.protocol.Message;
 import common.protocol.request.Login;
 import common.protocol.response.Ok;
-
-import java.io.IOException;
-import java.net.InetSocketAddress;
-import java.util.Queue;
-import java.util.Scanner;
-import java.util.logging.Logger;
 
 public class Main {
     private static Logger logger = Logger.getLogger(Main.class.getName());

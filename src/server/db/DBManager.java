@@ -1,13 +1,12 @@
 package server.db;
 
-import common.protocol.Message;
-import common.protocol.request.CreateAccount;
-
 import java.sql.Connection;
 import java.sql.DriverManager;
-import java.sql.PreparedStatement;
 import java.sql.SQLException;
-import java.util.concurrent.*;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -27,7 +26,7 @@ public class DBManager {
             try {
                 connection = DriverManager.getConnection("jdbc:sqlite" + database);
             } catch (SQLException e) {
-                logger.log(Level.SEVERE, "Error", e);
+                logger.log(Level.SEVERE, "Failure", e);
                 return;
             }
 
@@ -37,7 +36,7 @@ public class DBManager {
                         try {
                             wait();
                         } catch (InterruptedException e) {
-                            logger.log(Level.SEVERE, "Error", e);
+                            logger.log(Level.SEVERE, "Failure", e);
                             break;
                         }
                     }
@@ -53,7 +52,7 @@ public class DBManager {
                 try {
                     connection.close();
                 } catch (SQLException e) {
-                    logger.log(Level.SEVERE, "Error", e);
+                    logger.log(Level.SEVERE, "Failure", e);
                 }
             }
         }

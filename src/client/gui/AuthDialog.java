@@ -1,17 +1,17 @@
 package client.gui;
 
+import java.awt.BorderLayout;
+import java.awt.Font;
 import java.awt.Frame;
 
-import javax.swing.JDialog;
-import javax.swing.JPanel;
-import java.awt.BorderLayout;
 import javax.swing.GroupLayout;
 import javax.swing.GroupLayout.Alignment;
-import javax.swing.JLabel;
-import java.awt.Font;
-import javax.swing.LayoutStyle.ComponentPlacement;
-import javax.swing.JTextField;
 import javax.swing.JButton;
+import javax.swing.JDialog;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JTextField;
+import javax.swing.LayoutStyle.ComponentPlacement;
 
 public class AuthDialog extends JDialog {
     private static final int WIDTH = 240;

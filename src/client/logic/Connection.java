@@ -1,21 +1,31 @@
 package client.logic;
 
 
+import java.io.IOException;
+import java.net.InetSocketAddress;
+import java.net.Socket;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Queue;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.logging.Logger;
+
+import javax.net.ssl.SSLSocketFactory;
+
+import client.logic.events.LogicEvent;
+import client.logic.events.LogicEventListener;
+import client.logic.events.MessageEventListener;
 import common.exceptions.UnauthorizedException;
 import common.protocol.ComObject;
 import common.protocol.ComStream;
 import common.protocol.request.CreateAccount;
 import common.protocol.request.Login;
+import common.protocol.response.Failure;
 import common.protocol.response.Ok;
-
-import javax.net.ssl.SSLSocket;
-import javax.net.ssl.SSLSocketFactory;
-import java.io.IOException;
-import java.net.InetSocketAddress;
-import java.net.Socket;
-import java.util.Queue;
-import java.util.concurrent.*;
-import java.util.logging.Logger;
 
 public class Connection {
     private static final Logger logger = Logger.getLogger(Connection.class.getName());
@@ -26,6 +36,8 @@ public class Connection {
     private boolean connected;
     private boolean authorized;
     private final Queue<ComStream> inStreams;
+    protected List<LogicEventListener> logicListeners = new LinkedList<LogicEventListener>();
+    protected List<MessageEventListener> messagesListener = new LinkedList<MessageEventListener>();
 
     public Connection(String id) throws IOException {
         this.id = id;
@@ -43,8 +55,8 @@ public class Connection {
         socket.connect(address, timeout);
 
         logger.info("Connected");
-        OutWorker outWorker = new OutWorker(socket.getOutputStream(), outStreams);
-        InWorker inWorker = new InWorker(socket.getInputStream(), inStreams);
+        OutWorker outWorker = new OutWorker(socket.getOutputStream(), outStreams, logicListeners);
+        InWorker inWorker = new InWorker(socket.getInputStream(), inStreams, logicListeners, messagesListener);
         logger.info("Workers connected");
 
         exec.execute(outWorker);
@@ -53,7 +65,7 @@ public class Connection {
         logger.info("Connecting finished");
     }
 
-    public void disconnect() {
+    public synchronized void disconnect() {
         exec.shutdownNow();
         try {
             socket.close();
@@ -72,7 +84,13 @@ public class Connection {
         outStreams.add(stream);
         while (inStreams.isEmpty()) ;
         ComObject ob = inStreams.poll().obj;
-        if (ob instanceof Ok) authorized = true;
+        if (ob instanceof Ok) {
+            fireLogicEvent(new LogicEvent(this));
+            authorized = true;
+        }
+        if (ob instanceof Failure) {
+            fireLogicEvent(new LogicEvent(this));
+        }
         logger.info("Authentication finished");
         return ob;
     }
@@ -83,6 +101,12 @@ public class Connection {
         outStreams.add(stream);
         while(inStreams.isEmpty()) ;
         ComObject ob = inStreams.poll().obj;
+        if(ob instanceof Ok) {
+            fireLogicEvent(new LogicEvent(this));
+        }
+        if(ob instanceof Failure) {
+            fireLogicEvent(new LogicEvent(this));
+        }
         logger.info("Creating account finished");
         return ob;
     }
@@ -99,5 +123,19 @@ public class Connection {
     public void sendStream(ComStream stream) throws UnauthorizedException {
         if (!authorized) throw new UnauthorizedException();
         outStreams.add(stream);
+    }
+
+    public synchronized void addLogicEventListener(LogicEventListener lst) {
+        logicListeners.add(lst);
+    }
+
+    public synchronized void addMessageEventListener(MessageEventListener lst) {
+        messagesListener.add(lst);
+    }
+
+    protected synchronized void fireLogicEvent(LogicEvent e) {
+        for(LogicEventListener l : logicListeners) {
+            l.onLogicEvent(e);
+        }
     }
 }

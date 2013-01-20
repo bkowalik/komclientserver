@@ -1,20 +1,25 @@
 package server.connection;
 
-import common.protocol.ComStream;
+import java.io.IOException;
+import java.net.ServerSocket;
+import java.net.Socket;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.LinkedBlockingDeque;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+import javax.net.ssl.SSLServerSocketFactory;
+
 import server.connection.handlers.AuthHandler;
 import server.connection.handlers.Dispatcher;
 import server.connection.handlers.GarbageHandler;
 
-import javax.net.ServerSocketFactory;
-import javax.net.ssl.SSLServerSocket;
-import javax.net.ssl.SSLServerSocketFactory;
-import javax.net.ssl.SSLSocket;
-import java.io.IOException;
-import java.net.ServerSocket;
-import java.net.Socket;
-import java.util.concurrent.*;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import common.protocol.ComStream;
 
 public class Server {
 
@@ -33,9 +38,9 @@ public class Server {
                     unauthClients.add(worker);
                 }
             } catch (IOException e) {
-                logger.log(Level.WARNING, "Error", e);
+                logger.log(Level.WARNING, "Failure", e);
             } catch (InterruptedException e) {
-                logger.log(Level.WARNING, "Error", e);
+                logger.log(Level.WARNING, "Failure", e);
             } finally {
                 try {
                     server.close();
@@ -107,7 +112,7 @@ public class Server {
         try {
             server.close();
         } catch (IOException e) {
-            logger.log(Level.SEVERE, "Error", e);
+            logger.log(Level.SEVERE, "Failure", e);
         }
         logger.info("Server stopped");
     }

@@ -1,12 +1,5 @@
 package server.connection;
 
-import common.protocol.ComStream;
-import common.protocol.request.CreateAccount;
-import common.protocol.request.Login;
-import common.protocol.response.Error;
-import common.protocol.response.Ok;
-
-import javax.net.ssl.SSLSocket;
 import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -15,6 +8,12 @@ import java.net.Socket;
 import java.util.concurrent.BlockingQueue;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
+import common.protocol.ComStream;
+import common.protocol.request.CreateAccount;
+import common.protocol.request.Login;
+import common.protocol.response.Failure;
+import common.protocol.response.Ok;
 
 public class ClientWorker implements Runnable {
     private static final Logger logger = Logger.getLogger(ClientWorker.class.getName());
@@ -80,7 +79,7 @@ public class ClientWorker implements Runnable {
                             logger.config("Account created");
                         } else {
                             logger.config("Failure");
-                            output.writeObject(new ComStream(Server.SERVER_IDENTYFICATOR, abc.username, new Error(Error.Types.LOGIN_EXISTS)));
+                            output.writeObject(new ComStream(Server.SERVER_IDENTYFICATOR, abc.username, new Failure(Failure.Types.LOGIN_EXISTS)));
                             output.flush();
                             output.reset();
                             logger.config("Account creation failure");
@@ -88,7 +87,7 @@ public class ClientWorker implements Runnable {
                     } else {
                         output.writeObject(new ComStream(Server.SERVER_IDENTYFICATOR,
                                 null,
-                                new Error(Error.Types.HACK_ATTEMPT)
+                                new Failure(Failure.Types.HACK_ATTEMPT)
                         ));
                         output.flush();
                         output.reset();
@@ -96,10 +95,10 @@ public class ClientWorker implements Runnable {
                         return;
                     }
                 } catch (IOException e) {
-                    logger.log(Level.WARNING, "Error", e);
+                    logger.log(Level.WARNING, "Failure", e);
                     break;
                 } catch (ClassNotFoundException e) {
-                    logger.log(Level.WARNING, "Error", e);
+                    logger.log(Level.WARNING, "Failure", e);
                 }
             }
 
@@ -115,10 +114,10 @@ public class ClientWorker implements Runnable {
                         incomming.add(stream);
                     }
                 } catch (IOException e) {
-                    logger.log(Level.WARNING, "Error", e);
+                    logger.log(Level.WARNING, "Failure", e);
                     return;
                 } catch (ClassNotFoundException e) {
-                    logger.log(Level.WARNING, "Error", e);
+                    logger.log(Level.WARNING, "Failure", e);
                     return;
                 }
             }
@@ -152,7 +151,7 @@ public class ClientWorker implements Runnable {
             logger.info("Client" + login.username + " authentication success.");
             return true;
         } else {
-            Error e = new Error(Error.Types.NOT_AUTHORIZED);
+            Failure e = new Failure(Failure.Types.NOT_AUTHORIZED);
             output.writeObject(new ComStream(Server.SERVER_IDENTYFICATOR, login.username, e));
             output.flush();
             output.reset();

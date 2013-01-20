@@ -21,8 +21,10 @@ import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
+import javax.swing.JPopupMenu;
 import javax.swing.JScrollPane;
 import javax.swing.JSeparator;
+import javax.swing.SwingUtilities;
 
 import client.gui.ContactListModel.Contact;
 
@@ -35,10 +37,12 @@ public class MainWindow extends JFrame {
     public static final int WIDTH = 250;
     private State state;
     private AuthDialog authDialog = new AuthDialog(this);
-    private TalkDialog talkDialog = new TalkDialog(this);
-    private ContactListModel contactsListModel = new ContactListModel(contactsFile);
-    private JList contactsList;
-    private Map<String, WeakReference<TalkPanel>> talks = new HashMap<String, WeakReference<TalkPanel>>();
+    private final TalkDialog talkDialog = new TalkDialog(this);
+    private final ContactPopup contactPopup = new ContactPopup();
+    private final ContactListModel contactsListModel = new ContactListModel(contactsFile);
+    private final ListPopup listPopup = new ListPopup();
+    private final JList contactsList;
+    private final Map<String, WeakReference<TalkPanel>> talks = new HashMap<String, WeakReference<TalkPanel>>();
     
     private enum State {
         AUTHORIZED, NOT_AUTHORIZED;
@@ -187,7 +191,7 @@ public class MainWindow extends JFrame {
     private class ListMouseEvents extends MouseAdapter {
         @Override
         public void mouseClicked(MouseEvent e) {
-            if(e.getClickCount() == 2) {
+            if((e.getClickCount() == 2) && SwingUtilities.isLeftMouseButton(e)) {
                 int i = contactsList.locationToIndex(e.getPoint());
                 Contact c = (Contact)contactsListModel.getElementAt(i);
                 WeakReference<TalkPanel> tp = talks.get(c.getId());
@@ -197,7 +201,27 @@ public class MainWindow extends JFrame {
                 }
                 talkDialog.addTalk(tp.get());
                 if(!talkDialog.isVisible()) talkDialog.setVisible(true);
+            } else if((e.getClickCount() == 1) && SwingUtilities.isRightMouseButton(e)) {
+                int index = contactsList.locationToIndex(e.getPoint());
+                if(contactsList.getCellBounds(index, index).contains(e.getPoint())) {
+                    contactsList.setSelectedIndex(index);
+                    contactPopup.show(MainWindow.this.contactsList, e.getX(), e.getY());
+                } else {
+                    listPopup.show(MainWindow.this.contactsList, e.getX(), e.getY());
+                }
             }
+        } 
+    }
+    
+    private class ContactPopup extends JPopupMenu {
+        public ContactPopup() {
+            add(new JMenuItem("Istniejący kontakt"));
+        }
+    }
+    
+    private class ListPopup extends JPopupMenu {
+        public ListPopup() {
+            add(new JMenuItem("Nowy kontakt"));
         }
     }
 }

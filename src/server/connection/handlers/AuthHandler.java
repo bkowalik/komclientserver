@@ -1,11 +1,11 @@
 package server.connection.handlers;
 
 
-import server.connection.ClientWorker;
-
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentMap;
 import java.util.logging.Logger;
+
+import server.connection.ClientWorker;
 
 public class AuthHandler implements Runnable {
     private static final Logger logger = Logger.getLogger(AuthHandler.class.getName());

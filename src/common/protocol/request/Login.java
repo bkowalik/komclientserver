@@ -1,8 +1,8 @@
 package common.protocol.request;
 
-import common.protocol.ComObject;
-
 import java.io.Serializable;
+
+import common.protocol.ComObject;
 
 
 public class Login extends ComObject implements Serializable {

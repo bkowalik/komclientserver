@@ -6,14 +6,12 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.swing.AbstractListModel;
 
 import com.thoughtworks.xstream.XStream;
-import com.thoughtworks.xstream.annotations.XStreamAlias;
 import com.thoughtworks.xstream.annotations.XStreamAsAttribute;
 import com.thoughtworks.xstream.io.xml.Xpp3Driver;
 
@@ -69,7 +67,7 @@ public class ContactListModel extends AbstractListModel {
                     reader.close();
                     fr.close();
                 } catch(IOException e) {
-                    logger.log(Level.SEVERE, "Error", e);
+                    logger.log(Level.SEVERE, "Failure", e);
                 }
                 
                 contactsList = con;
@@ -94,7 +92,7 @@ public class ContactListModel extends AbstractListModel {
                     writer.close();
                     fw.close();
                 } catch(IOException e) {
-                    logger.log(Level.SEVERE, "Error", e);
+                    logger.log(Level.SEVERE, "Failure", e);
                 }
             }
         }
