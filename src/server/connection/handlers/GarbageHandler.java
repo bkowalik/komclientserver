@@ -6,10 +6,11 @@ import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import server.ServerLogger;
 import server.connection.ClientWorker;
 
 public class GarbageHandler implements Runnable {
-    private static final Logger logger = Logger.getLogger(GarbageHandler.class.getName());
+    private static final Logger logger = ServerLogger.logger;
     private final ConcurrentMap<String, ClientWorker> workers;
     private final int restTime;
 
@@ -22,13 +23,16 @@ public class GarbageHandler implements Runnable {
     public void run() {
         while (!Thread.interrupted()) {
             for (ConcurrentMap.Entry<String, ClientWorker> w : workers.entrySet()) {
-                if (!w.getValue().isActive()) workers.remove(w.getKey());
+                if (!w.getValue().isActive()) {
+                    workers.remove(w.getKey());
+                    logger.info(w.getValue().getHostAddress() + ": Client garbage collected ");
+                }
             }
         }
         try {
             TimeUnit.SECONDS.sleep(restTime);
         } catch (InterruptedException e) {
-            logger.log(Level.WARNING, "GarbageHandler interrupted", e);
+            logger.log(Level.FINEST, "GarbageHandler interrupted", e);
         }
     }
 }

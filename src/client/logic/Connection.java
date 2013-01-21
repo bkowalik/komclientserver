@@ -8,7 +8,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -16,6 +15,7 @@ import java.util.logging.Logger;
 
 import javax.net.ssl.SSLSocketFactory;
 
+import client.ClientLogger;
 import client.logic.events.LogicEvent;
 import client.logic.events.LogicEventListener;
 import client.logic.events.MessageEventListener;
@@ -28,9 +28,11 @@ import common.protocol.response.Failure;
 import common.protocol.response.Ok;
 
 public class Connection {
-    private static final Logger logger = Logger.getLogger(Connection.class.getName());
-    private final ExecutorService exec = Executors.newFixedThreadPool(3);
-    private final Socket socket;
+    private static final String LINUX_PATH = "/home/bartek/git/komunikator2/";
+    private static final String WINDOWS_PATH = "C:/Users/Bartek/Documents/git_repo/komunikator2/";
+    private static final Logger logger = ClientLogger.logger;
+    private ExecutorService exec;
+    private Socket socket;
     private final String id;
     private final BlockingQueue<ComStream> outStreams;
     private boolean connected;
@@ -41,31 +43,35 @@ public class Connection {
 
     public Connection(String id) throws IOException {
         this.id = id;
-        System.setProperty("javax.net.ssl.keyStore", "C:/Users/Bartek/Documents/git_repo/komunikator2/ClinetServer2");
+        System.setProperty("javax.net.ssl.keyStore", LINUX_PATH + "ClinetServer2");
         System.setProperty("javax.net.ssl.keyStorePassword", "admin1admin2");
-        System.setProperty("javax.net.ssl.trustStore", "C:/Users/Bartek/Documents/git_repo/komunikator2/ClinetServer2");
+        System.setProperty("javax.net.ssl.trustStore", LINUX_PATH + "ClinetServer2");
         System.setProperty("javax.net.ssl.trustStorePassword", "admin1admin2");
-        socket  = SSLSocketFactory.getDefault().createSocket();
         outStreams = new LinkedBlockingQueue<ComStream>();
         inStreams = new LinkedBlockingQueue<ComStream>();
     }
 
     public void connect(InetSocketAddress address, int timeout) throws IOException {
+        if(connected) return;
         logger.info("Connecting...");
+        outStreams.clear();
+        inStreams.clear();
+        socket  = SSLSocketFactory.getDefault().createSocket();
         socket.connect(address, timeout);
-
         logger.info("Connected");
-        OutWorker outWorker = new OutWorker(socket.getOutputStream(), outStreams, logicListeners);
-        InWorker inWorker = new InWorker(socket.getInputStream(), inStreams, logicListeners);
-        logger.info("Workers connected");
+        exec = Executors.newFixedThreadPool(3);
+//        OutWorker outWorker = new OutWorker(socket.getOutputStream(), outStreams, logicListeners);
+//        InWorker inWorker = new InWorker(socket.getInputStream(), inStreams, logicListeners);
+//        logger.info("Workers connected");
 
-        exec.execute(outWorker);
-        exec.execute(inWorker);
+        exec.execute(new OutWorker(socket.getOutputStream(), outStreams, logicListeners));
+        exec.execute(new InWorker(socket.getInputStream(), inStreams, logicListeners));
         connected = true;
         logger.info("Connecting finished");
     }
 
     public synchronized void disconnect() {
+        if(!connected) return;
         exec.shutdownNow();
         try {
             socket.close();
@@ -75,14 +81,17 @@ public class Connection {
     }
 
     public ComObject authenticate(Login login) throws InterruptedException {
-        logger.info("Authenticating...");
+        logger.config("Authenticating...");
         if(!connected) {
             logger.warning("Client not connected");
             return null;
         }
         ComStream stream = new ComStream(login.username, null, login);
+        logger.config("Auth request created");
         outStreams.add(stream);
+        logger.config("Auth request sent");
         ComObject ob = inStreams.take().obj;
+        logger.config("Auth token received");
         if (ob instanceof Ok) {
             fireLogicEvent(new LogicEvent(this, LogicEvent.Type.AUTH_SUCCESS));
             exec.execute(new Dispatcher(inStreams, messagesListener));
@@ -91,7 +100,7 @@ public class Connection {
         if (ob instanceof Failure) {
             fireLogicEvent(new LogicEvent(this, LogicEvent.Type.AUTH_FAILURE));
         }
-        logger.info("Authentication finished");
+        logger.config("Authentication finished");
         return ob;
     }
 

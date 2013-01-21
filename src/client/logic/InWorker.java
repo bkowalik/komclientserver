@@ -10,15 +10,13 @@ import java.util.Queue;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import client.ClientLogger;
 import client.logic.events.LogicEvent;
 import client.logic.events.LogicEventListener;
-import client.logic.events.MessageEvent;
-import client.logic.events.MessageEventListener;
 import common.protocol.ComStream;
-import common.protocol.Message;
 
 public class InWorker implements Runnable {
-    private static final Logger logger = Logger.getLogger(InWorker.class.getName());
+    private static final Logger logger = ClientLogger.logger;
     private final Queue<ComStream> inStreams;
     private final ObjectInput input;
     private final List<LogicEventListener> logicListeners;

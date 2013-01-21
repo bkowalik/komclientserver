@@ -14,9 +14,10 @@ import common.protocol.request.CreateAccount;
 import common.protocol.request.Login;
 import common.protocol.response.Failure;
 import common.protocol.response.Ok;
+import server.ServerLogger;
 
 public class ClientWorker implements Runnable {
-    private static final Logger logger = Logger.getLogger(ClientWorker.class.getName());
+    private static final Logger logger = ServerLogger.logger;
     private static final int MAX_LOGIN_ATTEMPTS = 3;
     private String id;
     private boolean running;
@@ -24,19 +25,17 @@ public class ClientWorker implements Runnable {
     private int attempts = 1;
     private final BlockingQueue<ComStream> incomming;
     private final Socket socket;
-//    private final SSLSocket socket;
     private final ObjectInputStream input;
     private final ObjectOutputStream output;
+    private final String hostAddress;
 
-    static {
-        logger.setLevel(Level.ALL);
-    }
 
     public ClientWorker(Socket socket, BlockingQueue<ComStream> incomming) throws IOException {
         if (socket == null) throw new NullPointerException("Socket cannot be null");
         if (incomming == null) throw new NullPointerException("Incomming messages queue cannot be null");
 
         this.socket = socket;
+        hostAddress = socket.getInetAddress().getHostAddress();
         this.incomming = incomming;
 
         this.output = new ObjectOutputStream(new BufferedOutputStream(this.socket.getOutputStream()));
@@ -54,12 +53,12 @@ public class ClientWorker implements Runnable {
                 try {
                     ComStream stream = (ComStream) input.readObject();
                     if(stream.obj instanceof Login) {
-                        logger.info("Login attempt");
+                        logger.info(hostAddress + ": login attempt");
                         if(authenticate(stream)) {
                             break;
                         } else {
                             if(attempts > MAX_LOGIN_ATTEMPTS) {
-                                logger.info("Max attempts exceeded");
+                                logger.info(hostAddress + " max attempts exceeded");
                                 shutDownNow();
                                 break;
                             } else {
@@ -68,21 +67,18 @@ public class ClientWorker implements Runnable {
                             }
                         }
                     } else if(stream.obj instanceof CreateAccount) {
-                        logger.info("Account creation attempt");
+                        logger.info(hostAddress + ": account creation attempt");
                         CreateAccount abc = (CreateAccount)stream.obj;
-                        logger.config("Stuck");
                         if(abc.username.equals("nowy") && abc.password.equals("haselko")) {
-                            logger.config("Success");
                             output.writeObject(new ComStream(Server.SERVER_IDENTYFICATOR, abc.username, new Ok(Ok.Type.ACCOUNT_CREATED)));
                             output.flush();
                             output.reset();
-                            logger.config("Account created");
+                            logger.config(hostAddress + ": Account created");
                         } else {
-                            logger.config("Failure");
                             output.writeObject(new ComStream(Server.SERVER_IDENTYFICATOR, abc.username, new Failure(Failure.Types.LOGIN_EXISTS)));
                             output.flush();
                             output.reset();
-                            logger.config("Account creation failure");
+                            logger.config(hostAddress + ": Account creation failure");
                         }
                     } else {
                         output.writeObject(new ComStream(Server.SERVER_IDENTYFICATOR,
@@ -91,14 +87,15 @@ public class ClientWorker implements Runnable {
                         ));
                         output.flush();
                         output.reset();
-                        logger.warning("Hack attempt");
+                        logger.warning(hostAddress + ": Hack attempt");
                         return;
                     }
                 } catch (IOException e) {
-                    logger.log(Level.WARNING, "Failure", e);
+                    logger.log(Level.FINEST, hostAddress + ": Failure", e);
                     break;
                 } catch (ClassNotFoundException e) {
-                    logger.log(Level.WARNING, "Failure", e);
+                    logger.log(Level.FINEST, hostAddress + ": Failure", e);
+                    break;
                 }
             }
 
@@ -114,10 +111,10 @@ public class ClientWorker implements Runnable {
                         incomming.add(stream);
                     }
                 } catch (IOException e) {
-                    logger.log(Level.WARNING, "Failure", e);
+                    logger.log(Level.FINEST, hostAddress + ": Failure", e);
                     return;
                 } catch (ClassNotFoundException e) {
-                    logger.log(Level.WARNING, "Failure", e);
+                    logger.log(Level.FINEST, hostAddress + ": Failure", e);
                     return;
                 }
             }
@@ -132,9 +129,10 @@ public class ClientWorker implements Runnable {
             input.close();
             output.close();
             socket.close();
-            logger.info("Client " + id + " disconnected");
         } catch (IOException e) {
-            logger.log(Level.SEVERE, "Very bad!", e);
+            logger.log(Level.FINEST, hostAddress + ": Very bad!", e);
+        } finally {
+            logger.info(hostAddress + ": disconnected");
         }
     }
 
@@ -148,14 +146,14 @@ public class ClientWorker implements Runnable {
             output.writeObject(new ComStream(Server.SERVER_IDENTYFICATOR, login.username, ok));
             output.flush();
             output.reset();
-            logger.info("Client" + login.username + " authentication success.");
+            logger.info(hostAddress + ": authentication success.");
             return true;
         } else {
             Failure e = new Failure(Failure.Types.NOT_AUTHORIZED);
             output.writeObject(new ComStream(Server.SERVER_IDENTYFICATOR, login.username, e));
             output.flush();
             output.reset();
-            logger.info("Client " + login.username + " authentication failure.");
+            logger.info(hostAddress + ": authentication failure.");
             return false;
         }
     }
@@ -181,5 +179,9 @@ public class ClientWorker implements Runnable {
     @Override
     public String toString() {
         return id;
+    }
+
+    public String getHostAddress() {
+        return hostAddress;
     }
 }

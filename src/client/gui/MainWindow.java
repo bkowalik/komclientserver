@@ -34,19 +34,18 @@ import client.logic.events.LogicEventListener;
 import client.logic.events.MessageEvent;
 import client.logic.events.MessageEventListener;
 import common.protocol.ComObject;
-import common.protocol.ComStream;
 import common.protocol.Message;
 
 @SuppressWarnings("serial")
 public class MainWindow extends JFrame {
-    protected static String contactsFile = "contacts.xml";
+    protected static String contactsFile = "/home/bartek/git/komunikator2/contacts.xml";
     protected static String myId = "Klient";
     public static final String APP_NAME = "Clinet";
     public static final int HEIGHT = 400;
     public static final int WIDTH = 250;
     private State state;
-    private AuthDialog authDialog = new AuthDialog(this);
     Connection connection;
+    private AuthDialog authDialog;
     private final TalkDialog talkDialog = new TalkDialog(this);
     private final ContactPopup contactPopup = new ContactPopup();
     private final ContactListModel contactsListModel = new ContactListModel(contactsFile);
@@ -87,6 +86,13 @@ public class MainWindow extends JFrame {
         mnClinet.add(btnLogin);
         
         btnLogout = new JMenuItem("Wyloguj");
+        btnLogout.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent actionEvent) {
+                connection.disconnect();
+                setGUIState(State.NOT_AUTHORIZED);
+            }
+        });
         btnLogout.setEnabled(false);
         mnClinet.add(btnLogout);
         
@@ -133,6 +139,7 @@ public class MainWindow extends JFrame {
         }
         connection.addLogicEventListener(new LogicEvents());
         connection.addMessageEventListener(new MessageEvents());
+        authDialog = new AuthDialog(this);
     }
     
     private void exportContacts() {
@@ -152,7 +159,7 @@ public class MainWindow extends JFrame {
                         null
                 );
                 if(val == JOptionPane.YES_OPTION) {
-                    contactsListModel.saveToFile(f.getAbsolutePath());
+                    contactsListModel.saveToFileThread(f.getAbsolutePath());
                 }
             }
         }

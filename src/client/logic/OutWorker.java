@@ -10,12 +10,13 @@ import java.util.concurrent.BlockingQueue;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import client.ClientLogger;
 import client.logic.events.LogicEvent;
 import client.logic.events.LogicEventListener;
 import common.protocol.ComStream;
 
 public class OutWorker implements Runnable {
-    private static final Logger logger = Logger.getLogger(OutWorker.class.getName());
+    private static final Logger logger = ClientLogger.logger;
     private final ObjectOutputStream output;
     private final BlockingQueue<ComStream> outStreams;
     private final List<LogicEventListener> logicListeners;

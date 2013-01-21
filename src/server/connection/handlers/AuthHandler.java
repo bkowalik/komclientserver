@@ -5,10 +5,11 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentMap;
 import java.util.logging.Logger;
 
+import server.ServerLogger;
 import server.connection.ClientWorker;
 
 public class AuthHandler implements Runnable {
-    private static final Logger logger = Logger.getLogger(AuthHandler.class.getName());
+    private static final Logger logger = ServerLogger.logger;
     private final BlockingQueue<ClientWorker> unauthorized;
     private final ConcurrentMap<String, ClientWorker> authorized;
 
@@ -42,7 +43,7 @@ public class AuthHandler implements Runnable {
                 continue;
             }
 
-            logger.info("Client " + worker.getId() + " authenticated.");
+            logger.info(worker.getHostAddress() + ": AuthHandler - authenticated.");
             authorized.put(worker.getId(), worker);
         }
     }

@@ -40,8 +40,12 @@ public class ContactListModel extends AbstractListModel {
         return contactsList.size();
     }
     
-    public void saveToFile(String file) {
+    public void saveToFileThread(String file) {
         new Thread(new ContactSaver(file)).start();
+    }
+
+    public void saveToFile(String file) {
+        new ContactSaver(file).run();
     }
     
     public void loadFromFile(String file) {
@@ -89,6 +93,7 @@ public class ContactListModel extends AbstractListModel {
                     FileWriter fw = new FileWriter(file);
                     BufferedWriter writer = new BufferedWriter(fw);
                     xstream.toXML(contactsList, writer);
+                    writer.flush();
                     writer.close();
                     fw.close();
                 } catch(IOException e) {
@@ -100,7 +105,6 @@ public class ContactListModel extends AbstractListModel {
     
     public static class Contact {
         private String name;
-        @XStreamAsAttribute
         private String id;
         
         public Contact(String name, String id) {

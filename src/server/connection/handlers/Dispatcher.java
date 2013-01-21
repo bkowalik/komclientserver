@@ -6,12 +6,13 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import server.ServerLogger;
 import server.connection.ClientWorker;
 
 import common.protocol.ComStream;
 
 public class Dispatcher implements Runnable {
-    private static final Logger logger = Logger.getLogger(Dispatcher.class.getName());
+    private static final Logger logger = ServerLogger.logger;
     private final BlockingQueue<ComStream> toDispatch;
     private final ConcurrentMap<String, ClientWorker> clients;
 
@@ -39,11 +40,11 @@ public class Dispatcher implements Runnable {
                 try {
                     clientWorker.sendResponse(comObj);
                 } catch (IOException e) {
-                    logger.log(Level.WARNING, "Failure", e);
+                    logger.log(Level.FINEST, "Failure", e);
                 }
             }
         } catch (InterruptedException e) {
-            logger.log(Level.WARNING, "Dispatcher interrupted", e);
+            logger.log(Level.FINEST, "Dispatcher interrupted", e);
         }
     }
 }

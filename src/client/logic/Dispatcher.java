@@ -1,5 +1,6 @@
 package client.logic;
 
+import client.ClientLogger;
 import client.logic.events.MessageEvent;
 import client.logic.events.MessageEventListener;
 import common.protocol.ComStream;
@@ -10,7 +11,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class Dispatcher implements Runnable {
-    private static final Logger logger = Logger.getLogger(Dispatcher.class.getName());
+    private static final Logger logger = ClientLogger.logger;
     private final BlockingQueue<ComStream> incomming;
     private final List<MessageEventListener> mlst;
 

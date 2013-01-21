@@ -15,6 +15,7 @@ import java.util.logging.Logger;
 
 import javax.net.ssl.SSLServerSocketFactory;
 
+import server.ServerLogger;
 import server.connection.handlers.AuthHandler;
 import server.connection.handlers.Dispatcher;
 import server.connection.handlers.GarbageHandler;
@@ -32,7 +33,6 @@ public class Server {
                     while (pausing) wait();
                     logger.info("Wainting...");
                     soc = server.accept();
-                    logger.info("Client connected");
                     ClientWorker worker = new ClientWorker(soc, incomming);
                     exec.execute(worker);
                     unauthClients.add(worker);
@@ -45,12 +45,14 @@ public class Server {
                 try {
                     server.close();
                 } catch (IOException e) {
-                    e.printStackTrace();
+                    logger.log(Level.CONFIG, "Exception", e);
                 }
             }
         }
     }
 
+    private static final String LINUX_PATH = "/home/bartek/git/komunikator2/";
+    private static final String WINDOWS_PATH = "C:/Users/Bartek/Documents/git_repo/komunikator2/";
     static final String SERVER_IDENTYFICATOR = "ClinetServer";
     static final int DEFAULT_IDLE_TIMEOUT = 30000;
     private final ConcurrentMap<String, ClientWorker> clients = new ConcurrentHashMap<String, ClientWorker>();
@@ -63,21 +65,20 @@ public class Server {
     private AuthHandler authHandler;
     private Dispatcher dispatcher;
     private ServerSocket server;
-//    private SSLServerSocket server;
     private boolean running;
     private boolean pausing;
-    private static final Logger logger = Logger.getLogger(Server.class.getName());
+    private static final Logger logger = ServerLogger.logger;
 
     public Server(int port) throws IOException {
 //        server = ServerSocketFactory.getDefault().createServerSocket(port);
 //        System.setProperty("javax.net.debug", "ssl");
-        System.setProperty("javax.net.ssl.keyStore", "C:/Users/Bartek/Documents/git_repo/komunikator2/ClinetServer2");
+        System.setProperty("javax.net.ssl.keyStore", LINUX_PATH + "ClinetServer2");
         System.setProperty("javax.net.ssl.keyStorePassword", "admin1admin2");
-        System.setProperty("javax.net.ssl.trustStore", "C:/Users/Bartek/Documents/git_repo/komunikator2/ClinetServer2");
+        System.setProperty("javax.net.ssl.trustStore", LINUX_PATH + "ClinetServer2");
         System.setProperty("javax.net.ssl.trustStorePassword", "admin1admin2");
         server = SSLServerSocketFactory.getDefault().createServerSocket(port);
         acceptanceHandler = new AcceptanceHandler();
-        garbageHandler = new GarbageHandler(clients, 10);
+        garbageHandler = new GarbageHandler(clients, 1);
         dispatcher = new Dispatcher(incomming, clients);
         authHandler = new AuthHandler(unauthClients, clients);
     }
@@ -112,7 +113,7 @@ public class Server {
         try {
             server.close();
         } catch (IOException e) {
-            logger.log(Level.SEVERE, "Failure", e);
+            logger.log(Level.CONFIG, "Failure", e);
         }
         logger.info("Server stopped");
     }
