@@ -1,17 +1,20 @@
 package client;
 
 
-import java.util.logging.ConsoleHandler;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import java.util.logging.SimpleFormatter;
+import java.util.logging.*;
 
 public final class ClientLogger {
-    public static final Logger logger = Logger.getLogger(ClientLogger.class.getName());
-    static {
-        ConsoleHandler ch = new ConsoleHandler();
-        ch.setLevel(Level.FINEST);
-        ch.setFormatter(new SimpleFormatter());
-        logger.addHandler(ch);
+    private static final Logger logger = Logger.getLogger(ClientLogger.class.getName());
+    private static Handler handler = new ConsoleHandler();
+    private static Level level = Level.FINEST;
+
+    public static void init() {
+        handler.setFormatter(new SimpleFormatter());
+        handler.setLevel(level);
+        logger.addHandler(handler);
+    }
+
+    public static Logger getLogger() {
+        return logger;
     }
 }

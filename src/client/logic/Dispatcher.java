@@ -11,7 +11,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class Dispatcher implements Runnable {
-    private static final Logger logger = ClientLogger.logger;
+    private static final Logger logger = ClientLogger.getLogger();
     private final BlockingQueue<ComStream> incomming;
     private final List<MessageEventListener> mlst;
 
@@ -25,6 +25,7 @@ public class Dispatcher implements Runnable {
         while(!Thread.interrupted()) {
             try {
                 ComStream cs = incomming.take();
+                logger.config("!!!MESSAGE!!!");
                 fireMessageEvent(new MessageEvent(this, cs));
             } catch (InterruptedException e) {
                 logger.log(Level.CONFIG, "Error", e);

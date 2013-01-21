@@ -3,6 +3,7 @@ package client.gui;
 import client.logic.Connection;
 import client.logic.events.LogicEvent;
 import client.logic.events.LogicEventListener;
+import common.protocol.ComObject;
 import common.protocol.request.Login;
 
 import java.awt.BorderLayout;
@@ -30,7 +31,7 @@ public class AuthDialog extends JDialog {
         setAlwaysOnTop(true);
         setTitle("Logowanie");
         setLocationRelativeTo(parent);
-        setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
+        setDefaultCloseOperation(JDialog.HIDE_ON_CLOSE);
         
         JPanel panel = new JPanel();
         getContentPane().add(panel, BorderLayout.CENTER);
@@ -102,9 +103,9 @@ public class AuthDialog extends JDialog {
         try {
             if(!mainWindow.connection.isConnected()) {
                 mainWindow.connection.connect(new InetSocketAddress("localhost", 44321), 0);
-                System.out.println("POŁĄCZONO");
             }
-            mainWindow.connection.authenticate(new Login(username.getText(), password.getText()));
+            Login log = new Login(username.getText(), password.getText());
+            ComObject obj = mainWindow.connection.authenticate(log);
         } catch (InterruptedException e) {
             e.printStackTrace();
         } catch (IOException e) {

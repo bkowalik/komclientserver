@@ -9,7 +9,7 @@ import server.ServerLogger;
 import server.connection.ClientWorker;
 
 public class AuthHandler implements Runnable {
-    private static final Logger logger = ServerLogger.logger;
+    private static final Logger logger = ServerLogger.getLogger();
     private final BlockingQueue<ClientWorker> unauthorized;
     private final ConcurrentMap<String, ClientWorker> authorized;
 
@@ -29,7 +29,6 @@ public class AuthHandler implements Runnable {
             try {
                 worker = unauthorized.take();
             } catch (InterruptedException e) {
-                e.printStackTrace();
                 break;
             }
 

@@ -10,7 +10,7 @@ import server.ServerLogger;
 import server.connection.ClientWorker;
 
 public class GarbageHandler implements Runnable {
-    private static final Logger logger = ServerLogger.logger;
+    private static final Logger logger = ServerLogger.getLogger();
     private final ConcurrentMap<String, ClientWorker> workers;
     private final int restTime;
 

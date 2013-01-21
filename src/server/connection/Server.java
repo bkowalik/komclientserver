@@ -29,7 +29,7 @@ public class Server {
         public void run() {
             Socket soc;
             try {
-                while (!Thread.interrupted()) {
+                while (!Thread.currentThread().interrupted()) {
                     while (pausing) wait();
                     logger.info("Wainting...");
                     soc = server.accept();
@@ -67,15 +67,15 @@ public class Server {
     private ServerSocket server;
     private boolean running;
     private boolean pausing;
-    private static final Logger logger = ServerLogger.logger;
+    private static final Logger logger = ServerLogger.getLogger();
 
     public Server(int port) throws IOException {
 //        server = ServerSocketFactory.getDefault().createServerSocket(port);
 //        System.setProperty("javax.net.debug", "ssl");
         System.setProperty("javax.net.ssl.keyStore", LINUX_PATH + "ClinetServer2");
         System.setProperty("javax.net.ssl.keyStorePassword", "admin1admin2");
-        System.setProperty("javax.net.ssl.trustStore", LINUX_PATH + "ClinetServer2");
-        System.setProperty("javax.net.ssl.trustStorePassword", "admin1admin2");
+//        System.setProperty("javax.net.ssl.trustStore", LINUX_PATH + "ClinetServer2");
+//        System.setProperty("javax.net.ssl.trustStorePassword", "admin1admin2");
         server = SSLServerSocketFactory.getDefault().createServerSocket(port);
         acceptanceHandler = new AcceptanceHandler();
         garbageHandler = new GarbageHandler(clients, 1);

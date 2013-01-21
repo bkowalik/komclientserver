@@ -16,7 +16,7 @@ import client.logic.events.LogicEventListener;
 import common.protocol.ComStream;
 
 public class OutWorker implements Runnable {
-    private static final Logger logger = ClientLogger.logger;
+    private static final Logger logger = ClientLogger.getLogger();
     private final ObjectOutputStream output;
     private final BlockingQueue<ComStream> outStreams;
     private final List<LogicEventListener> logicListeners;

@@ -17,7 +17,7 @@ import common.protocol.response.Ok;
 import server.ServerLogger;
 
 public class ClientWorker implements Runnable {
-    private static final Logger logger = ServerLogger.logger;
+    private static final Logger logger = ServerLogger.getLogger();
     private static final int MAX_LOGIN_ATTEMPTS = 3;
     private String id;
     private boolean running;
@@ -49,7 +49,7 @@ public class ClientWorker implements Runnable {
     @Override
     public void run() {
         try {
-            while (!Thread.interrupted() && !authenticated) {
+            while (!Thread.currentThread().interrupted() && !authenticated) {
                 try {
                     ComStream stream = (ComStream) input.readObject();
                     if(stream.obj instanceof Login) {
@@ -101,7 +101,7 @@ public class ClientWorker implements Runnable {
 
             ComStream stream;
             Object obj;
-            while (!Thread.interrupted() && authenticated) {
+            while (!Thread.currentThread().interrupted() && authenticated) {
                 try {
                     obj = null;
                     obj = input.readObject();
@@ -125,6 +125,7 @@ public class ClientWorker implements Runnable {
 
     public synchronized void shutDownNow() {
         running = false;
+        authenticated = false;
         try {
             input.close();
             output.close();

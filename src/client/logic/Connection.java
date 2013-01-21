@@ -30,7 +30,7 @@ import common.protocol.response.Ok;
 public class Connection {
     private static final String LINUX_PATH = "/home/bartek/git/komunikator2/";
     private static final String WINDOWS_PATH = "C:/Users/Bartek/Documents/git_repo/komunikator2/";
-    private static final Logger logger = ClientLogger.logger;
+    private static final Logger logger = ClientLogger.getLogger();
     private ExecutorService exec;
     private Socket socket;
     private final String id;
@@ -43,8 +43,8 @@ public class Connection {
 
     public Connection(String id) throws IOException {
         this.id = id;
-        System.setProperty("javax.net.ssl.keyStore", LINUX_PATH + "ClinetServer2");
-        System.setProperty("javax.net.ssl.keyStorePassword", "admin1admin2");
+//        System.setProperty("javax.net.ssl.keyStore", LINUX_PATH + "ClinetServer2");
+//        System.setProperty("javax.net.ssl.keyStorePassword", "admin1admin2");
         System.setProperty("javax.net.ssl.trustStore", LINUX_PATH + "ClinetServer2");
         System.setProperty("javax.net.ssl.trustStorePassword", "admin1admin2");
         outStreams = new LinkedBlockingQueue<ComStream>();
@@ -60,6 +60,7 @@ public class Connection {
         socket.connect(address, timeout);
         logger.info("Connected");
         exec = Executors.newFixedThreadPool(3);
+
 //        OutWorker outWorker = new OutWorker(socket.getOutputStream(), outStreams, logicListeners);
 //        InWorker inWorker = new InWorker(socket.getInputStream(), inStreams, logicListeners);
 //        logger.info("Workers connected");
@@ -73,11 +74,12 @@ public class Connection {
     public synchronized void disconnect() {
         if(!connected) return;
         exec.shutdownNow();
+        connected = false;
+        authorized = false;
         try {
             socket.close();
         } catch (IOException e) {
         }
-        connected = false;
     }
 
     public ComObject authenticate(Login login) throws InterruptedException {
@@ -86,6 +88,7 @@ public class Connection {
             logger.warning("Client not connected");
             return null;
         }
+        logger.config("Auth request");
         ComStream stream = new ComStream(login.username, null, login);
         logger.config("Auth request created");
         outStreams.add(stream);
@@ -121,6 +124,10 @@ public class Connection {
 
     public synchronized boolean isConnected() {
         return connected;
+    }
+
+    public synchronized boolean isAuthenticated() {
+        return authorized;
     }
 
     public Queue<ComStream> getInStreams() throws UnauthorizedException {

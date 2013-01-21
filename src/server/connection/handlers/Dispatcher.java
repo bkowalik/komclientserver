@@ -12,7 +12,7 @@ import server.connection.ClientWorker;
 import common.protocol.ComStream;
 
 public class Dispatcher implements Runnable {
-    private static final Logger logger = ServerLogger.logger;
+    private static final Logger logger = ServerLogger.getLogger();
     private final BlockingQueue<ComStream> toDispatch;
     private final ConcurrentMap<String, ClientWorker> clients;
 

@@ -17,17 +17,25 @@ import common.protocol.Message;
 import common.protocol.request.Login;
 import common.protocol.response.Ok;
 
+import javax.swing.*;
+
 public class Main {
     private static Logger logger = Logger.getLogger(Main.class.getName());
 
     public static void main(String[] args) throws Exception {
 //        runConsole(args);
+        ClientLogger.init();
         runGUI();
     }
     
     public static void runGUI() {
-        MainWindow mw = new MainWindow();
-        mw.setVisible(true);
+        SwingUtilities.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+                MainWindow mw = new MainWindow();
+                mw.setVisible(true);
+            }
+        });
     }
 
     public static void runConsole(String[] args) throws IOException, InterruptedException, UnauthorizedException {
