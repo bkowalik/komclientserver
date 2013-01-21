@@ -75,7 +75,7 @@ public class TalkPanel extends JPanel {
         chatArea.append(MainWindow.myId + ": " + msg + '\n');
         chatArea.setCaretPosition(chatArea.getDocument().getLength());
         try {
-            con.sendStream(new ComStream(MainWindow.myId, talkWith.getId(), new Message(msg)));
+            con.sendStream(new ComStream(con.getID(), talkWith.getId(), new Message(msg)));
         } catch (UnauthorizedException e) {
             e.printStackTrace();
         }

@@ -50,7 +50,7 @@ public class Main {
         String pass = in.nextLine();
 
         System.out.println("Łączenie...");
-        Connection c = new Connection(login);
+        Connection c = new Connection();
         c.connect(new InetSocketAddress(host, port), 0);
         System.out.println("Połączono");
         System.out.println("Uwieżytelnianie...");

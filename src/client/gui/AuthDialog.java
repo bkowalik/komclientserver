@@ -27,11 +27,12 @@ public class AuthDialog extends JDialog {
 
     public AuthDialog(MainWindow parent) {
         super(parent, true);
+        setModal(false);
         mainWindow = parent;
-        setAlwaysOnTop(true);
+        setAlwaysOnTop(false);
         setTitle("Logowanie");
         setLocationRelativeTo(parent);
-        setDefaultCloseOperation(JDialog.HIDE_ON_CLOSE);
+        setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
         
         JPanel panel = new JPanel();
         getContentPane().add(panel, BorderLayout.CENTER);
@@ -104,8 +105,10 @@ public class AuthDialog extends JDialog {
             if(!mainWindow.connection.isConnected()) {
                 mainWindow.connection.connect(new InetSocketAddress("localhost", 44321), 0);
             }
-            Login log = new Login(username.getText(), password.getText());
-            ComObject obj = mainWindow.connection.authenticate(log);
+            Login log =  null;
+            log = new Login(username.getText(), password.getText());
+            ComObject obj = null;
+            obj = mainWindow.connection.authenticate(log);
         } catch (InterruptedException e) {
             e.printStackTrace();
         } catch (IOException e) {

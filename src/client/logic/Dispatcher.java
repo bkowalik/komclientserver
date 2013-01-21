@@ -25,7 +25,6 @@ public class Dispatcher implements Runnable {
         while(!Thread.interrupted()) {
             try {
                 ComStream cs = incomming.take();
-                logger.config("!!!MESSAGE!!!");
                 fireMessageEvent(new MessageEvent(this, cs));
             } catch (InterruptedException e) {
                 logger.log(Level.CONFIG, "Error", e);

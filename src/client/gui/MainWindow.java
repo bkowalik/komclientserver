@@ -38,7 +38,8 @@ import common.protocol.Message;
 
 @SuppressWarnings("serial")
 public class MainWindow extends JFrame {
-    protected static String contactsFile = "/home/bartek/git/komunikator2/contacts.xml";
+//    protected static String contactsFile = "/home/bartek/git/komunikator2/contacts.xml";
+    protected static String contactsFile = "C:\\Users\\Bartek\\Documents\\git_repo\\komunikator2\\contacts.xml";
     protected static String myId = "Klient";
     public static final String APP_NAME = "Clinet";
     public static final int HEIGHT = 400;
@@ -133,7 +134,7 @@ public class MainWindow extends JFrame {
         if(new File(contactsFile).exists())
             contactsListModel.loadFromFile(contactsFile);
         try {
-            connection = new Connection(myId);
+            connection = new Connection();
         } catch (IOException e) {
             e.printStackTrace();
         }

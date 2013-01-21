@@ -42,10 +42,10 @@ public class OutWorker implements Runnable {
                     output.flush();
                     output.reset();
                 } catch (InterruptedException e) {
-                    logger.log(Level.WARNING, "Failure", e);
+                    logger.log(Level.FINEST, "Failure", e);
                     break;
                 } catch (IOException e) {
-                    logger.log(Level.WARNING, "Failure", e);
+                    logger.log(Level.FINEST, "Failure", e);
                     break;
                 }
             }
@@ -53,6 +53,7 @@ public class OutWorker implements Runnable {
             try {
                 output.close();
             } catch (IOException e) {
+                logger.log(Level.FINEST, "Failure", e);
             }
         }
     }

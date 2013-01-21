@@ -36,11 +36,12 @@ public class InWorker implements Runnable {
                 try {
                     stream = (ComStream) input.readObject();
                     inStreams.add(stream);
+                    logger.info("ComStream incomming");
                 } catch (ClassNotFoundException e) {
                     logger.log(Level.SEVERE, "Failure", e);
                     break;
                 } catch (IOException e) {
-                    logger.log(Level.WARNING, "Failure", e);
+                    logger.log(Level.FINEST, "Failure", e);
                     fireLogicEvent(new LogicEvent(this, LogicEvent.Type.DISCONNECT));
                     break;
                 }
@@ -49,7 +50,7 @@ public class InWorker implements Runnable {
             try {
                 input.close();
             } catch (IOException e) {
-                logger.log(Level.SEVERE, "Failure", e);
+                logger.log(Level.FINEST, "Failure", e);
             }
         }
     }

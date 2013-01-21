@@ -38,9 +38,9 @@ public class Server {
                     unauthClients.add(worker);
                 }
             } catch (IOException e) {
-                logger.log(Level.WARNING, "Failure", e);
+                logger.log(Level.FINEST, "Failure", e);
             } catch (InterruptedException e) {
-                logger.log(Level.WARNING, "Failure", e);
+                logger.log(Level.FINEST, "Failure", e);
             } finally {
                 try {
                     server.close();
@@ -52,7 +52,7 @@ public class Server {
     }
 
     private static final String LINUX_PATH = "/home/bartek/git/komunikator2/";
-    private static final String WINDOWS_PATH = "C:/Users/Bartek/Documents/git_repo/komunikator2/";
+    private static final String WINDOWS_PATH = "C:\\Users\\Bartek\\Documents\\git_repo\\komunikator2\\";
     static final String SERVER_IDENTYFICATOR = "ClinetServer";
     static final int DEFAULT_IDLE_TIMEOUT = 30000;
     private final ConcurrentMap<String, ClientWorker> clients = new ConcurrentHashMap<String, ClientWorker>();
@@ -72,10 +72,10 @@ public class Server {
     public Server(int port) throws IOException {
 //        server = ServerSocketFactory.getDefault().createServerSocket(port);
 //        System.setProperty("javax.net.debug", "ssl");
-        System.setProperty("javax.net.ssl.keyStore", LINUX_PATH + "ClinetServer2");
+        System.setProperty("javax.net.ssl.keyStore", WINDOWS_PATH + "ClinetServer2");
         System.setProperty("javax.net.ssl.keyStorePassword", "admin1admin2");
-//        System.setProperty("javax.net.ssl.trustStore", LINUX_PATH + "ClinetServer2");
-//        System.setProperty("javax.net.ssl.trustStorePassword", "admin1admin2");
+        System.setProperty("javax.net.ssl.trustStore", WINDOWS_PATH + "ClinetServer2");
+        System.setProperty("javax.net.ssl.trustStorePassword", "admin1admin2");
         server = SSLServerSocketFactory.getDefault().createServerSocket(port);
         acceptanceHandler = new AcceptanceHandler();
         garbageHandler = new GarbageHandler(clients, 1);
