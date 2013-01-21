@@ -130,7 +130,7 @@ public class MainWindow extends JFrame {
         
         addWindowListener(new WindowEvents());
         setCenter();
-        setGUIState(State.NOT_AUTHORIZED); // TODO: zmienić po zdebugowaniu
+        setGUIState(State.NOT_AUTHORIZED);
         if(new File(contactsFile).exists())
             contactsListModel.loadFromFile(contactsFile);
         try {
@@ -194,12 +194,14 @@ public class MainWindow extends JFrame {
             btnLogin.setEnabled(false);
             contactsList.setEnabled(true);
             state = State.AUTHORIZED;
+            setTitle(APP_NAME + " - " + connection.getID());
             break;
         case NOT_AUTHORIZED:
             btnLogout.setEnabled(false);
             btnLogin.setEnabled(true);
             contactsList.setEnabled(false);
             state = State.NOT_AUTHORIZED;
+            setTitle(APP_NAME);
             break;
         }
     }

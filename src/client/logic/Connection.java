@@ -96,10 +96,11 @@ public class Connection {
         ComObject ob = inStreams.take().obj;
         logger.config("Auth token received");
         if (ob instanceof Ok) {
-            fireLogicEvent(new LogicEvent(this, LogicEvent.Type.AUTH_SUCCESS));
-            exec.execute(new Dispatcher(inStreams, messagesListener));
             id = login.username;
             authorized = true;
+            exec.execute(new Dispatcher(inStreams, messagesListener));
+            fireLogicEvent(new LogicEvent(this, LogicEvent.Type.AUTH_SUCCESS));
+
         }
         if (ob instanceof Failure) {
             fireLogicEvent(new LogicEvent(this, LogicEvent.Type.AUTH_FAILURE));

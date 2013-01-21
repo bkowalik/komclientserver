@@ -21,6 +21,7 @@ public class TalkPanel extends JPanel {
     private final JTextArea msgArea;
     private final Contact talkWith;
     private final Connection con;
+    private boolean notified;
 
     public TalkPanel(Contact talkWith, Connection con) {
         super(new BorderLayout());
@@ -56,12 +57,6 @@ public class TalkPanel extends JPanel {
         });
         bottomScroll.setViewportView(msgArea);
         mainSplit.setRightComponent(bottomScroll);
-        
-        /*
-         * DEMO
-         */
-        chatArea.append("Czat leci...\n");
-        msgArea.append("Tu wpisz treść");
     }
 
     public String getTalkWithName() {
@@ -72,7 +67,7 @@ public class TalkPanel extends JPanel {
         String msg = msgArea.getText();
         if(msg.equals("")) return;
         msgArea.setText("");
-        chatArea.append(MainWindow.myId + ": " + msg + '\n');
+        chatArea.append(con.getID() + ": " + msg + '\n');
         chatArea.setCaretPosition(chatArea.getDocument().getLength());
         try {
             con.sendStream(new ComStream(con.getID(), talkWith.getId(), new Message(msg)));
@@ -88,5 +83,13 @@ public class TalkPanel extends JPanel {
     
     public String getHistory() {
         return chatArea.getText();
+    }
+
+    public void setNotified() {
+        notified = true;
+    }
+
+    public boolean isNotified() {
+        return notified;
     }
 }

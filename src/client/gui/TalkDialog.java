@@ -6,6 +6,8 @@ import java.awt.event.MouseEvent;
 
 import javax.swing.JFrame;
 import javax.swing.JTabbedPane;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 
 @SuppressWarnings("serial")
 public class TalkDialog extends JFrame {
@@ -19,6 +21,15 @@ public class TalkDialog extends JFrame {
         setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
         setSize(WIDTH, HEIGHT);
         talkTabs.addMouseListener(new TalkTabsEvents());
+        talkTabs.addChangeListener(new ChangeListener() {
+            @Override
+            public void stateChanged(ChangeEvent e) {
+                if(talkTabs.getTabCount() == 0) TalkDialog.this.setVisible(false);
+                else {
+                    notification(Notifications.UNNOTIFY, talkTabs.getSelectedIndex());
+                }
+            }
+        });
     }
     
     public void addTalk(TalkPanel p) {
@@ -29,8 +40,26 @@ public class TalkDialog extends JFrame {
 
     public void notify(TalkPanel p) {
         int i = talkTabs.indexOfComponent(p);
-        talkTabs.setBackgroundAt(i, Color.BLACK);
-        talkTabs.setForegroundAt(i, Color.WHITE);
+        notification(Notifications.NOTIFY, i);
+    }
+
+    private void notification(Notifications n, int i) {
+        switch (n) {
+            case NOTIFY:
+                if(i != talkTabs.getSelectedIndex()) {
+                    talkTabs.setBackgroundAt(i, Color.BLACK);
+                    talkTabs.setForegroundAt(i, Color.WHITE);
+                }
+                break;
+            case UNNOTIFY:
+                talkTabs.setBackgroundAt(i, new Color(238, 238, 238));
+                talkTabs.setForegroundAt(i, Color.BLACK);
+                break;
+        }
+    }
+
+    private enum Notifications {
+        NOTIFY, UNNOTIFY;
     }
 
     private class TalkTabsEvents extends MouseAdapter {
