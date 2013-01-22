@@ -26,12 +26,12 @@ public class AuthDialog extends JDialog {
     private JTextField password;
 
     public AuthDialog(MainWindow parent) {
-        super(parent, true);
-        setModal(false);
+        super(parent);
         mainWindow = parent;
-        setAlwaysOnTop(false);
-        setTitle("Logowanie");
+        setAlwaysOnTop(true);
+        setModal(true);
         setLocationRelativeTo(parent);
+        setTitle("Logowanie");
         setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
         
         JPanel panel = new JPanel();
@@ -57,6 +57,11 @@ public class AuthDialog extends JDialog {
         });
         
         JButton btnAnuluj = new JButton("Anuluj");
+        btnAnuluj.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent arg0) {
+                dispose();
+            }
+        });
         GroupLayout gl_panel = new GroupLayout(panel);
         gl_panel.setHorizontalGroup(
                 gl_panel.createParallelGroup(Alignment.LEADING)

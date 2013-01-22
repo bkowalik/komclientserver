@@ -19,12 +19,14 @@ import common.protocol.response.Ok;
 
 import javax.swing.*;
 
-public class Main {
-    private static Logger logger = Logger.getLogger(Main.class.getName());
+import static client.ClientLogger.*;
 
-    public static void main(String[] args) throws Exception {
+public class Main {
+    private static Logger logger = ClientLogger.getLogger();
+
+    public static void main(String[] args) {
 //        runConsole(args);
-        ClientLogger.init();
+        init();
         runGUI();
     }
     

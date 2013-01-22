@@ -10,8 +10,10 @@ import java.util.concurrent.BlockingQueue;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import static client.ClientLogger.*;
+
 public class Dispatcher implements Runnable {
-    private static final Logger logger = ClientLogger.getLogger();
+    private static final Logger logger = getLogger();
     private final BlockingQueue<ComStream> incomming;
     private final List<MessageEventListener> mlst;
 

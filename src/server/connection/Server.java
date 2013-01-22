@@ -21,6 +21,7 @@ import server.connection.handlers.Dispatcher;
 import server.connection.handlers.GarbageHandler;
 
 import common.protocol.ComStream;
+import server.db.DBManager;
 
 public class Server {
 
@@ -51,6 +52,7 @@ public class Server {
         }
     }
 
+    private static final int MAX_THREADS = 5;
     private static final String LINUX_PATH = "/home/bartek/git/komunikator2/";
     private static final String WINDOWS_PATH = "C:\\Users\\Bartek\\Documents\\git_repo\\komunikator2\\";
     static final String SERVER_IDENTYFICATOR = "ClinetServer";
@@ -64,6 +66,7 @@ public class Server {
     private GarbageHandler garbageHandler;
     private AuthHandler authHandler;
     private Dispatcher dispatcher;
+    private DBManager dbManager;
     private ServerSocket server;
     private boolean running;
     private boolean pausing;
@@ -81,12 +84,14 @@ public class Server {
         garbageHandler = new GarbageHandler(clients, 1);
         dispatcher = new Dispatcher(incomming, clients);
         authHandler = new AuthHandler(unauthClients, clients);
+        dbManager = new DBManager("myDatabase", incomming, MAX_THREADS);
     }
 
     public synchronized void start() {
         running = true;
         exec.execute(acceptanceHandler);
         exec.execute(authHandler);
+        dbManager.start();
         exec.execute(dispatcher);
         exec.execute(garbageHandler);
         logger.info("Server started");
@@ -110,6 +115,7 @@ public class Server {
         if (!running) return;
         running = false;
         exec.shutdownNow();
+        dbManager.stop();
         try {
             server.close();
         } catch (IOException e) {

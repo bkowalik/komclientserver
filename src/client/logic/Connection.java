@@ -27,10 +27,12 @@ import common.protocol.request.Login;
 import common.protocol.response.Failure;
 import common.protocol.response.Ok;
 
+import static client.ClientLogger.*;
+
 public class Connection {
     private static final String LINUX_PATH = "/home/bartek/git/komunikator2/";
     private static final String WINDOWS_PATH = "C:\\Users\\Bartek\\Documents\\git_repo\\komunikator2\\";
-    private static final Logger logger = ClientLogger.getLogger();
+    private static final Logger logger = getLogger();
     private ExecutorService exec;
     private Socket socket;
     private String id;
@@ -42,7 +44,6 @@ public class Connection {
     protected List<MessageEventListener> messagesListener = new LinkedList<MessageEventListener>();
 
     public Connection() throws IOException {
-        this.id = id;
         System.setProperty("javax.net.ssl.keyStore", WINDOWS_PATH + "ClinetServer2");
         System.setProperty("javax.net.ssl.keyStorePassword", "admin1admin2");
         System.setProperty("javax.net.ssl.trustStore", WINDOWS_PATH + "ClinetServer2");

@@ -54,8 +54,7 @@ public class MainWindow extends JFrame {
     private final JList contactsList;
     private final Map<String, WeakReference<TalkPanel>> talks = new HashMap<String, WeakReference<TalkPanel>>();
     private JMenuItem btnLogin;
-    private JMenuItem btnLogout;
-    
+
     private enum State {
         AUTHORIZED, NOT_AUTHORIZED;
     }
@@ -86,17 +85,6 @@ public class MainWindow extends JFrame {
         });
         mnClinet.add(btnLogin);
         
-        btnLogout = new JMenuItem("Wyloguj");
-        btnLogout.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent actionEvent) {
-                connection.disconnect();
-                setGUIState(State.NOT_AUTHORIZED);
-            }
-        });
-        btnLogout.setEnabled(false);
-        mnClinet.add(btnLogout);
-        
         JMenu mnKontakty = new JMenu("Kontakty");
         mnClinet.add(mnKontakty);
         
@@ -120,6 +108,12 @@ public class MainWindow extends JFrame {
         mnClinet.add(separator);
         
         JMenuItem mntmZamknij = new JMenuItem("Zamknij");
+        mntmZamknij.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                connection.disconnect();
+                System.exit(0);
+            }
+        });
         mnClinet.add(mntmZamknij);
         
         JMenu mnPomoc = new JMenu("Pomoc");
@@ -190,14 +184,12 @@ public class MainWindow extends JFrame {
     private void setGUIState(State s) {
         switch(s) {
         case AUTHORIZED:
-            btnLogout.setEnabled(true);
             btnLogin.setEnabled(false);
             contactsList.setEnabled(true);
             state = State.AUTHORIZED;
             setTitle(APP_NAME + " - " + connection.getID());
             break;
         case NOT_AUTHORIZED:
-            btnLogout.setEnabled(false);
             btnLogin.setEnabled(true);
             contactsList.setEnabled(false);
             state = State.NOT_AUTHORIZED;

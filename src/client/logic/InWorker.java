@@ -15,8 +15,10 @@ import client.logic.events.LogicEvent;
 import client.logic.events.LogicEventListener;
 import common.protocol.ComStream;
 
+import static client.ClientLogger.*;
+
 public class InWorker implements Runnable {
-    private static final Logger logger = ClientLogger.getLogger();
+    private static final Logger logger = getLogger();
     private final Queue<ComStream> inStreams;
     private final ObjectInput input;
     private final List<LogicEventListener> logicListeners;
