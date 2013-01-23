@@ -25,13 +25,13 @@ public class AuthDialog extends JDialog {
     private JTextField username;
     private JTextField password;
 
-    public AuthDialog(MainWindow parent) {
+    public AuthDialog(MainWindow parent, String title) {
         super(parent);
         mainWindow = parent;
         setAlwaysOnTop(true);
         setModal(true);
         setLocationRelativeTo(parent);
-        setTitle("Logowanie");
+        setTitle(title);
         setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
         
         JPanel panel = new JPanel();

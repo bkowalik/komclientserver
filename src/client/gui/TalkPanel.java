@@ -3,6 +3,9 @@ package client.gui;
 import java.awt.BorderLayout;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
@@ -11,6 +14,7 @@ import javax.swing.JTextArea;
 
 import client.gui.ContactListModel.Contact;
 import client.logic.Connection;
+import com.sun.jmx.snmp.SnmpStringFixed;
 import common.exceptions.UnauthorizedException;
 import common.protocol.ComStream;
 import common.protocol.Message;
@@ -22,6 +26,7 @@ public class TalkPanel extends JPanel {
     private final Contact talkWith;
     private final Connection con;
     private boolean notified;
+    private SimpleDateFormat sdf = new SimpleDateFormat("dd-mm-yy hh:mm:ss");
 
     public TalkPanel(Contact talkWith, Connection con) {
         super(new BorderLayout());
@@ -67,7 +72,7 @@ public class TalkPanel extends JPanel {
         String msg = msgArea.getText();
         if(msg.equals("")) return;
         msgArea.setText("");
-        chatArea.append(con.getID() + ": " + msg + '\n');
+        chatArea.append(sdf.format(new Date()) + " " + con.getID() + ": " + msg + '\n');
         chatArea.setCaretPosition(chatArea.getDocument().getLength());
         try {
             con.sendStream(new ComStream(con.getID(), talkWith.getId(), new Message(msg)));
@@ -76,8 +81,8 @@ public class TalkPanel extends JPanel {
         }
     }
 
-    public void addMessage(String from, String msg) {
-        chatArea.append(from + ": " + msg + '\n');
+    public void addMessage(Date date, String from, String msg) {
+        chatArea.append(sdf.format(date) + " " + from + ": " + msg + '\n');
         chatArea.setCaretPosition(chatArea.getDocument().getLength());
     }
     

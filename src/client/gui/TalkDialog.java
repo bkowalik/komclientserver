@@ -16,6 +16,7 @@ public class TalkDialog extends JFrame {
     private JTabbedPane talkTabs = new JTabbedPane(JTabbedPane.BOTTOM);
     
     public TalkDialog(Frame parent) {
+        setTitle("Rozmowy");
         setBounds(parent.getBounds());
         add(talkTabs, BorderLayout.CENTER);
         setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);

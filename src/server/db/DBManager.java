@@ -1,155 +1,195 @@
 package server.db;
 
-import common.protocol.ComObject;
+
 import common.protocol.ComStream;
 import common.protocol.Message;
 import common.protocol.request.CreateAccount;
 import common.protocol.request.Login;
 import server.ServerLogger;
 
-import javax.sql.RowSet;
+import java.io.UnsupportedEncodingException;
+import java.math.BigInteger;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.sql.*;
-import java.util.Queue;
-import java.util.concurrent.*;
+import java.util.*;
+import java.util.Date;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class DBManager {
+    private static final Logger logger = ServerLogger.getLogger();
+    private static final int MAX_CONNECTIONS = 5;
+    private final BlockingQueue<Connection> avaliable = new ArrayBlockingQueue<Connection>(MAX_CONNECTIONS);
+    private final String database;
 
-    private class DBTask implements Runnable {
-        private Connection connection;
-        private boolean working;
-        private String database;
+    public DBManager(String database) {
+        this.database = database;
+        try {
+            Class.forName("org.sqlite.JDBC");
+        } catch (ClassNotFoundException e) {
+            logger.log(Level.FINEST, "Error", e);
+            throw new NullPointerException("JDBC loading failed");
+        }
+    }
 
-        public DBTask(String database) {
-            this.database = database;
+    public final void initialize() throws SQLException {
+        for(int i = 0; i < MAX_CONNECTIONS; i++) {
+            avaliable.add(DriverManager.getConnection("jdbc:sqlite:" + database));
         }
 
-        @Override
-        public synchronized void run() {
-            try {
-                connection = DriverManager.getConnection("jdbc:sqlite:" + database);
-            } catch (SQLException e) {
-                logger.log(Level.SEVERE, "Failure", e);
-                throw new NullPointerException("Database file exception");
-            }
+    }
 
-            try {
-                ComObject obj;
-                while(!Thread.interrupted()) {
-                    obj = null;
-                    try {
-                        obj = requests.take();
-                    } catch (InterruptedException e) {
-                        logger.log(Level.FINEST, "ERROR", e);
-                    }
-
-                    if(obj instanceof Login) {
-                        Login login = (Login) obj;
-                    } else if(obj instanceof CreateAccount) {
-                        CreateAccount account = (CreateAccount) obj;
-                    }
-                }
-            } finally {
-                try {
-                    connection.close();
-                } catch (SQLException e) {
-                    logger.log(Level.SEVERE, "Failure", e);
-                }
+    public final void free() {
+        try {
+            for(int i = 0; i < MAX_CONNECTIONS; i++) {
+                avaliable.take().close();
             }
+        } catch(Exception e) {
+            logger.log(Level.FINER, "Error", e);
         }
+    }
 
-        private boolean dbLogin(Login login) throws SQLException {
-            String statement = "SELECT `password` FROM `users` WHERE `username` = ?";
-            PreparedStatement ps = connection.prepareStatement(statement);
+    public final boolean dbLogin(Login login) {
+        Connection con = null;
+        PreparedStatement ps = null;
+        ResultSet rowSet = null;
+        try {
+            con = getFreeConnection();
+        } catch (InterruptedException e) {
+            logger.log(Level.FINEST, "Error", e);
+            return false;
+        }
+        try {
+            String statement = "SELECT password FROM users WHERE username = ?";
+            ps = con.prepareStatement(statement);
             ps.setString(1, login.username);
-            ResultSet rowSet = ps.executeQuery();
-
-            if(rowSet.next()) return false;
+            rowSet = ps.executeQuery();
 
             if(login.password.equals(rowSet.getString("password"))) {
                 return true;
             } else {
                 return false;
             }
-        }
 
-        private PreparedStatement dbCreateAcc(CreateAccount account) throws SQLException {
-            String statement = "";
-            return connection.prepareStatement(statement);
-        }
-
-        private PreparedStatement dbStoreMsg(Message msg) throws SQLException {
-            String statement = "";
-            return connection.prepareStatement(statement);
-        }
-
-        public synchronized void work() {
-            working = true;
-            notifyAll();
-        }
-
-        public boolean isWorking() {
-            return working;
-        }
-    }
-
-    private static final Logger logger = ServerLogger.getLogger();
-    private int maxThreads = 5;
-    private ExecutorService exec;
-    private final BlockingQueue<DBTask> workers;
-    private final Queue<ComStream> icomming;
-    private final BlockingQueue<ComObject> requests;
-    private boolean running;
-    private final String database;
-
-    public DBManager(String database, Queue<ComStream> incomming, int maxThreads) {
-        this.database = database;
-        this.icomming = incomming;
-        this.maxThreads = maxThreads;
-        requests = new LinkedBlockingQueue<ComObject>();
-        workers = new ArrayBlockingQueue<DBTask>(maxThreads);
-        exec = Executors.newFixedThreadPool(maxThreads);
-        try {
-            Class.forName("org.sqlite.JDBC");
-        } catch (ClassNotFoundException e) {
+        } catch (SQLException e) {
             logger.log(Level.FINEST, "Error", e);
-            throw new NullPointerException("Database null!");
+        } finally {
+            avaliable.add(con);
+            if(rowSet != null) try {
+                rowSet.close();
+                if(ps != null) ps.close();
+
+            } catch (SQLException e) {
+                logger.log(Level.FINEST, "Error", e);
+            }
+        }
+
+        return false;
+    }
+
+    private boolean dbCreateAcc(CreateAccount account) throws SQLException {
+        String statement = "";
+        return false;
+    }
+
+    public final void dbStoreMsg(String from, String to, String msg, long date) throws InterruptedException {
+        Connection con = getFreeConnection();
+        PreparedStatement ps = null;
+        try {
+            String statement = "INSERT INTO messages (from_user, to_user, message_body, send) VALUES(?,?,?,?)";
+            ps = con.prepareStatement(statement);
+            ps.setString(1, from);
+            ps.setString(2, to);
+            ps.setString(3, msg);
+            ps.setLong(4, date);
+            ps.executeUpdate();
+        } catch(SQLException e) {
+            logger.log(Level.FINEST, "Error", e);
+        } finally {
+            avaliable.add(con);
+            if(ps != null) try {
+                ps.close();
+            } catch (SQLException e) {
+                logger.log(Level.FINEST, "Error", e);
+            }
         }
     }
 
-    public void start() {
-        for(int i = 0; i < maxThreads; i++) {
-            DBTask task = new DBTask(database);
-            exec.execute(task);
-            workers.add(task);
-        }
-        running = true;
-        logger.info("DBThreads started");
-    }
+    public final List<ComStream> getPendingMessages(String id) {
+        Connection con = null;
+        List<ComStream> pending = new LinkedList<ComStream>();
 
-    public void stop() {
-        exec.shutdownNow();
-        running = false;
-        logger.info("DBThreads stopped");
-    }
-
-    public void postRequest(ComObject obj) {
-        requests.add(obj);
-    }
-
-    public static void main(String[] args) throws Exception {
-        Class.forName("org.sqlite.JDBC");
-        Connection con = DriverManager.getConnection("jdbc:sqlite:myDatabase");
-
-        PreparedStatement ps = con.prepareStatement("SELECT `password` FROM `users` WHERE `username`=?");
-        ps.setString(1, "bartek");
-        ResultSet rs = ps.executeQuery();
-
-        while(rs.next()) {
-            System.out.println(rs.getString("password"));
+        try {
+            con = getFreeConnection();
+        } catch (InterruptedException e) {
+            logger.log(Level.FINEST, "Error", e);
+            return null;
         }
 
-        con.close();
+        PreparedStatement ps = null;
+        ResultSet rs = null;
+        try {
+            String statement = "SELECT * FROM messages WHERE to_user = ?";
+            ps = con.prepareStatement(statement);
+            ps.setString(1, id);
+            rs = ps.executeQuery();
+
+            while(rs.next()) {
+                String from = rs.getString("from_user");
+                String to = rs.getString("to_user");
+                String body = rs.getString("message_body");
+                Date date = new Date(rs.getLong("send"));
+                ComStream cs = new ComStream(from, to, new Message(body, date));
+                pending.add(cs);
+            }
+
+            rs.close();
+            ps.close();
+
+            if(pending.isEmpty()) return pending;
+
+            statement = "DELETE FROM messages WHERE to_user = ?";
+            ps = con.prepareStatement(statement);
+            ps.setString(1, id);
+            int i = ps.executeUpdate();
+            ps.close();
+
+        } catch (SQLException e) {
+            logger.log(Level.FINEST, "Error", e);
+            return pending;
+        } finally {
+            avaliable.add(con);
+            try {
+                if(rs != null) rs.close();
+                if(ps != null) ps.close();
+            } catch (SQLException e) {
+                logger.log(Level.FINEST, "Error", e);
+            }
+        }
+
+        return pending;
+    }
+
+    protected Connection getFreeConnection() throws InterruptedException {
+        return avaliable.take();
+    }
+
+    protected void releaseConnection(Connection con) {
+        avaliable.add(con);
+    }
+
+    public static void main(String[] args) throws NoSuchAlgorithmException, UnsupportedEncodingException {
+        MessageDigest md5 = MessageDigest.getInstance("MD5");
+        String haslo = "admin1";
+        md5.update(haslo.getBytes());
+        StringBuffer buffer = new StringBuffer();
+        byte[] digest = md5.digest();
+        for(int i = 0; i < digest.length; i++) {
+            buffer.append(Integer.toHexString(0xff & digest[i]));
+        }
+        System.out.println(buffer.toString());
     }
 }

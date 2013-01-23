@@ -3,6 +3,7 @@ package server.connection;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.sql.SQLException;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -34,7 +35,7 @@ public class Server {
                     while (pausing) wait();
                     logger.info("Wainting...");
                     soc = server.accept();
-                    ClientWorker worker = new ClientWorker(soc, incomming);
+                    ClientWorker worker = new ClientWorker(soc, dbManager, incomming);
                     exec.execute(worker);
                     unauthClients.add(worker);
                 }
@@ -73,27 +74,31 @@ public class Server {
     private static final Logger logger = ServerLogger.getLogger();
 
     public Server(int port) throws IOException {
-//        server = ServerSocketFactory.getDefault().createServerSocket(port);
 //        System.setProperty("javax.net.debug", "ssl");
-        System.setProperty("javax.net.ssl.keyStore", WINDOWS_PATH + "ClinetServer2");
+        System.setProperty("javax.net.ssl.keyStore", /*WINDOWS_PATH +*/ "ClinetServer2");
         System.setProperty("javax.net.ssl.keyStorePassword", "admin1admin2");
-        System.setProperty("javax.net.ssl.trustStore", WINDOWS_PATH + "ClinetServer2");
-        System.setProperty("javax.net.ssl.trustStorePassword", "admin1admin2");
+//        System.setProperty("javax.net.ssl.trustStore", WINDOWS_PATH + "ClinetServer2");
+//        System.setProperty("javax.net.ssl.trustStorePassword", "admin1admin2");
         server = SSLServerSocketFactory.getDefault().createServerSocket(port);
+        dbManager = new DBManager("myDatabase");
         acceptanceHandler = new AcceptanceHandler();
         garbageHandler = new GarbageHandler(clients, 1);
-        dispatcher = new Dispatcher(incomming, clients);
+        dispatcher = new Dispatcher(dbManager, incomming, clients);
         authHandler = new AuthHandler(unauthClients, clients);
-        dbManager = new DBManager("myDatabase", incomming, MAX_THREADS);
     }
 
     public synchronized void start() {
-        running = true;
+        try {
+            dbManager.initialize();
+        } catch (SQLException e) {
+            logger.log(Level.FINER, "Error", e);
+            return;
+        }
         exec.execute(acceptanceHandler);
         exec.execute(authHandler);
-        dbManager.start();
         exec.execute(dispatcher);
         exec.execute(garbageHandler);
+        running = true;
         logger.info("Server started");
     }
 
@@ -115,7 +120,7 @@ public class Server {
         if (!running) return;
         running = false;
         exec.shutdownNow();
-        dbManager.stop();
+        dbManager.free();
         try {
             server.close();
         } catch (IOException e) {

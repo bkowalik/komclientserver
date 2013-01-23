@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
+import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -15,6 +16,7 @@ import common.protocol.request.Login;
 import common.protocol.response.Failure;
 import common.protocol.response.Ok;
 import server.ServerLogger;
+import server.db.DBManager;
 
 public class ClientWorker implements Runnable {
     private static final Logger logger = ServerLogger.getLogger();
@@ -28,15 +30,17 @@ public class ClientWorker implements Runnable {
     private final ObjectInputStream input;
     private final ObjectOutputStream output;
     private final String hostAddress;
+    private final DBManager dbManager;
 
 
-    public ClientWorker(Socket socket, BlockingQueue<ComStream> incomming) throws IOException {
+    public ClientWorker(Socket socket, DBManager dbManager, BlockingQueue<ComStream> incomming) throws IOException {
         if (socket == null) throw new NullPointerException("Socket cannot be null");
         if (incomming == null) throw new NullPointerException("Incomming messages queue cannot be null");
 
         this.socket = socket;
         hostAddress = socket.getInetAddress().getHostAddress();
         this.incomming = incomming;
+        this.dbManager = dbManager;
 
         this.output = new ObjectOutputStream(new BufferedOutputStream(this.socket.getOutputStream()));
         this.output.flush();
@@ -49,6 +53,9 @@ public class ClientWorker implements Runnable {
     @Override
     public void run() {
         try {
+            /*
+            Autoryzacja ewentualnie tworzenie konta
+             */
             while (!Thread.currentThread().interrupted() && !authenticated) {
                 try {
                     ComStream stream = (ComStream) input.readObject();
@@ -99,6 +106,14 @@ public class ClientWorker implements Runnable {
                 }
             }
 
+            List<ComStream> pending = dbManager.getPendingMessages(id);
+            if(!pending.isEmpty()) {
+                incomming.addAll(pending);
+            }
+
+            /*
+            Pętla rozmowy klienta
+             */
             ComStream stream;
             Object obj;
             while (!Thread.currentThread().interrupted() && authenticated) {
@@ -139,8 +154,9 @@ public class ClientWorker implements Runnable {
 
     protected boolean authenticate(ComStream stream) throws IOException {
         Login login = (Login) stream.obj;
-        if ((login.username.equals("bartek") && login.password.equals("haslo"))
-                || (login.username.equals("misia") && login.password.equals("maslo"))) {
+//        if ((login.username.equals("bartek") && login.password.equals("haslo"))
+//                || (login.username.equals("misia") && login.password.equals("maslo"))) {
+        if (dbManager.dbLogin(login)) {
             authenticated = true;
             id = login.username;
             Ok ok = new Ok(Ok.Type.AUTHENTICATED);

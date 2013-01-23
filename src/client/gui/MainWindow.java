@@ -12,6 +12,7 @@ import java.awt.event.WindowEvent;
 import java.io.File;
 import java.io.IOException;
 import java.lang.ref.WeakReference;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -22,9 +23,11 @@ import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
+import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
 import javax.swing.JScrollPane;
 import javax.swing.JSeparator;
+import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
 
 import client.gui.ContactListModel.Contact;
@@ -39,7 +42,8 @@ import common.protocol.Message;
 @SuppressWarnings("serial")
 public class MainWindow extends JFrame {
 //    protected static String contactsFile = "/home/bartek/git/komunikator2/contacts.xml";
-    protected static String contactsFile = "C:\\Users\\Bartek\\Documents\\git_repo\\komunikator2\\contacts.xml";
+//    protected static String contactsFile = "C:\\Users\\Bartek\\Documents\\git_repo\\komunikator2\\contacts.xml";
+    protected static String contactsFile = "contacts.xml";
     protected static String myId = "Klient";
     public static final String APP_NAME = "Clinet";
     public static final int HEIGHT = 400;
@@ -134,7 +138,7 @@ public class MainWindow extends JFrame {
         }
         connection.addLogicEventListener(new LogicEvents());
         connection.addMessageEventListener(new MessageEvents());
-        authDialog = new AuthDialog(this);
+        authDialog = new AuthDialog(this, "Logowanie");
     }
     
     private void exportContacts() {
@@ -156,6 +160,8 @@ public class MainWindow extends JFrame {
                 if(val == JOptionPane.YES_OPTION) {
                     contactsListModel.saveToFileThread(f.getAbsolutePath());
                 }
+            } else {
+                contactsListModel.saveToFileThread(f.getAbsolutePath());
             }
         }
     }
@@ -246,7 +252,7 @@ public class MainWindow extends JFrame {
             if(obj instanceof Message) {
                 Message msg = (Message)obj;
                 TalkPanel p = talk(new Contact(from, from));
-                p.addMessage(from, msg.body);
+                p.addMessage(msg.date, from, msg.body);
                 talkDialog.notify(p);
             }
         }
@@ -281,13 +287,75 @@ public class MainWindow extends JFrame {
     
     private class ContactPopup extends JPopupMenu {
         public ContactPopup() {
-            add(new JMenuItem("Istniejący kontakt"));
+            JMenuItem delete = new JMenuItem("Skasuj");
+            add(delete);
+            delete.addActionListener(new ActionListener() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    int choice = JOptionPane.showConfirmDialog(
+                            MainWindow.this,
+                            "Czy chcesz skasować kontakt?",
+                            "Uwaga",
+                            JOptionPane.OK_CANCEL_OPTION,
+                            JOptionPane.WARNING_MESSAGE,
+                            null
+                    );
+                    if(choice == JOptionPane.OK_OPTION) {
+                        contactsListModel.remove(contactsList.getSelectedIndex());
+                    }
+                }
+            });
+            
+            JMenuItem edit = new JMenuItem("Edytuj");
+            add(edit);
+            edit.addActionListener(new ActionListener() {
+                @Override
+                public void actionPerformed(ActionEvent arg0) {
+                    ContactPanel cpanel = new ContactPanel();
+                    Contact c = (Contact) contactsListModel.getElementAt(contactsList.getSelectedIndex());
+                    cpanel.setConId(c.getId());
+                    cpanel.setConName(c.getName());
+                    int choice = JOptionPane.showConfirmDialog(
+                            MainWindow.this,
+                            cpanel,
+                            "Edycja",
+                            JOptionPane.OK_CANCEL_OPTION,
+                            JOptionPane.PLAIN_MESSAGE,
+                            null
+                    );
+                    if(choice == JOptionPane.OK_OPTION) {
+                        if(!cpanel.getConId().equals("") && !cpanel.getConName().equals("")) {
+                            contactsListModel.edit(contactsList.getSelectedIndex(), new Contact(cpanel.getConName(), cpanel.getConId()));                            
+                        }
+                    }
+                }
+            });
         }
     }
     
     private class ListPopup extends JPopupMenu {
         public ListPopup() {
-            add(new JMenuItem("Nowy kontakt"));
+            JMenuItem newOne = new JMenuItem("Nowy kontakt");
+            add(newOne);
+            newOne.addActionListener(new ActionListener() {
+                
+                @Override
+                public void actionPerformed(ActionEvent arg0) {
+                    ContactPanel panel = new ContactPanel();
+                    int choice = JOptionPane.showConfirmDialog(
+                            MainWindow.this,
+                            panel,
+                            "Nowy kontakt",
+                            JOptionPane.OK_CANCEL_OPTION,
+                            JOptionPane.PLAIN_MESSAGE,
+                            null
+                    );
+                    if(choice == JOptionPane.OK_OPTION) {
+                        Contact con = new Contact(panel.getConName(), panel.getConId());
+                        contactsListModel.add(con);
+                    }
+                }
+            });
         }
     }
 }

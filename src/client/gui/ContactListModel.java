@@ -11,6 +11,8 @@ import java.util.logging.Logger;
 
 import javax.swing.AbstractListModel;
 
+import sun.text.normalizer.UProperty;
+
 import com.thoughtworks.xstream.XStream;
 import com.thoughtworks.xstream.annotations.XStreamAsAttribute;
 import com.thoughtworks.xstream.io.xml.Xpp3Driver;
@@ -28,6 +30,22 @@ public class ContactListModel extends AbstractListModel {
     
     private void configureXStream() {
         xstream.alias("contact", ContactListModel.Contact.class);
+    }
+    
+    public void add(Contact c) {
+        contactsList.add(c);
+        fireContentsChanged(this, 0, getSize());
+    }
+    
+    public void edit(int index, Contact c) {
+        contactsList.remove(index);
+        contactsList.add(index, c);
+        fireContentsChanged(this, 0, getSize());
+    }
+    
+    public void remove(int index) {
+        contactsList.remove(index);
+        fireContentsChanged(this, 0, getSize());
     }
     
     @Override

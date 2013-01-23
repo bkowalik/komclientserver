@@ -44,8 +44,8 @@ public class Connection {
     protected List<MessageEventListener> messagesListener = new LinkedList<MessageEventListener>();
 
     public Connection() throws IOException {
-        System.setProperty("javax.net.ssl.keyStore", WINDOWS_PATH + "ClinetServer2");
-        System.setProperty("javax.net.ssl.keyStorePassword", "admin1admin2");
+//        System.setProperty("javax.net.ssl.keyStore", WINDOWS_PATH + "ClinetServer2");
+//        System.setProperty("javax.net.ssl.keyStorePassword", "admin1admin2");
         System.setProperty("javax.net.ssl.trustStore", WINDOWS_PATH + "ClinetServer2");
         System.setProperty("javax.net.ssl.trustStorePassword", "admin1admin2");
         outStreams = new LinkedBlockingQueue<ComStream>();
